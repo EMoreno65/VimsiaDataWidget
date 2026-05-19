@@ -7,12 +7,13 @@ interface ApiResponse {
 const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
 
+  // useEffect means the action inside will run once when the component mounts
+  // the component mounting means the first time it appears on the screen
   useEffect(() => {
-    // Fetch data from backend
-    fetch('http://localhost:4000/api/hello')
-      .then((res) => res.json())
-      .then((data: ApiResponse) => setMessage(data.message))
-      .catch((err) => setMessage(`Error: ${err.message}`));
+    fetch('http://localhost:4000/api/hello') // Backend api is local for now
+      .then((res) => res.json()) // Parse the response as JSON, which is the format our backend sends data in
+      .then((data: ApiResponse) => setMessage(data.message)) // Set the message state to the message we got from the backend, which will cause the component to re-render and show the new message
+      .catch((err) => setMessage(`Error: ${err.message}`)); // If there's an error (like the backend isn't running), set the message to show the error instead
   }, []);
 
   return (
