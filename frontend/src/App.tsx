@@ -9,7 +9,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Fetch data from backend
-    fetch('http://localhost:5000/api/hello')
+    fetch('http://localhost:4000/api/hello')
       .then((res) => res.json())
       .then((data: ApiResponse) => setMessage(data.message))
       .catch((err) => setMessage(`Error: ${err.message}`));
