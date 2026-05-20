@@ -17,10 +17,13 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+    <><div style={{ padding: '20px', fontFamily: 'Arial' }}>
       <h1>Full Stack App</h1>
       <p>Message from backend: <strong>{message}</strong></p>
-    </div>
+    </div><div>
+        <input type="file" id="csvFileInput" accept=".csv">
+        </input>
+      </div></>
   );
 };
 
