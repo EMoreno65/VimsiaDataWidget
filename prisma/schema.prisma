@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  createdAt           DateTime             @default(now())
+  enrollmentSnapshots EnrollmentSnapshot[]
+  financialData       FinancialData[]
+}
+
+model EnrollmentSnapshot {
+  id               Int                @id @default(autoincrement())
+  schoolId         Int
+  school           School             @relation(fields: [schoolId], references: [id])
+  snapshotDate     DateTime
+  totalEnrolled    Int
+  newStudents      Int
+  withdrawals      Int
+  reEnrollments    Int
+  createdAt        DateTime           @default(now())
+  enrollmentGrades EnrollmentGrade[]
+}
+
+model EnrollmentGrade {
+  id         Int                @id @default(autoincrement())
+  snapshotId Int
+  snapshot   EnrollmentSnapshot @relation(fields: [snapshotId], references: [id])
+  gradeLevel String
+  count      Int
+}
+
+model FinancialData {
+  id             Int      @id @default(autoincrement())
+  schoolId       Int
+  school         School   @relation(fields: [schoolId], references: [id])
+  fiscalYear     Int
+  revenue        Float
+  expenses       Float
+  financialAid   Float
+  tuitionIncome  Float
+  createdAt      DateTime @default(now())
+}
