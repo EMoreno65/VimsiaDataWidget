@@ -7,4 +7,4 @@ build/
 .DS_Store
 .vscode/
 npm-debug.log*
-yarn-error.log*
+yarn-error.log*.env
