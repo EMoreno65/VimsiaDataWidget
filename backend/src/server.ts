@@ -21,15 +21,18 @@ app.post('api/upload-csv', upload.single('file'), async (req, res) => { // This 
 
     const csvText = req.file.buffer.toString(); // Convert the uploaded file buffer to a string, which is necessary for parsing the CSV data
     const rows = parse(csvText, {
-      columns: true, // This option tells the parser to treat the first row of the CSV as column headers, which allows us to access values by column name
       skip_empty_lines: true, // This option tells the parser to ignore empty lines in the CSV, which can help prevent errors when processing the data
       trim: true, // This option tells the parser to trim whitespace from the beginning and end of each field, which can help clean up the data before inserting it into the database
-    }) as Record<string, string>[]; // We assert the type of the parsed rows as an array of records where each record is an object with string keys and string values
+    }) as string[][]; // We assert that the result of parsing will be an array of arrays of strings, which represents the rows and columns of the CSV data
 
-    const data = rows.map((row) => ({
-      name: row['name'], // Map the 'name' column from the CSV to the 'name' field in our database model
-    }));
-
+    const headers = rows[1]; // The second row of the CSV is assumed to contain the headers, which we will use as keys for our data objects
+    const data = rows.slice(2).map((row) => { // Data is gonna be filled by going through each row and doing the actions below
+      const obj: Record<string, string> = {}; // Create an empty object to hold the data for this row>
+      headers.forEach((header: string, index: number) => { // This is basically going through each column title and associating the piece of data in that column with the column header
+        obj[header] = row[index];
+        return obj; // Returning it will add it to the data
+      })
+    })
     const result = await prisma.school.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
       skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
