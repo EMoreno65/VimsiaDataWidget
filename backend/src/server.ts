@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { parse } from 'csv-parse/sync'; // Import the synchronous CSV parser from the csv-parse library
 import pg from 'pg';
@@ -33,13 +34,16 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
     }) as string[][]; // We assert that the result of parsing will be an array of arrays of strings, which represents the rows and columns of the CSV data
 
     const headers = rows[0]; // The first row of the CSV is assumed to contain the headers, which we will use as keys for our data objects
-    const data = rows.slice(1).map((row) => { // Data is gonna be filled by going through each row and doing the actions below
+    const data: Record<string, string>[] = []; // Create an empty array to hold the data objects that we will create from the CSV rows
+    rows.slice(1).forEach((row) => { // Data is gonna be filled by going through each row and doing the actions below
       const obj: Record<string, string> = {}; // Create an empty object to hold the data for this row>
       headers.forEach((header: string, index: number) => { // This is basically going through each column title and associating the piece of data in that column with the column header
         obj[header] = row[index];
-        return obj; // Returning it will add it to the data
+        console.log("current object is ", obj);
       })
+      data.push(obj);
     })
+    console.log("Data is ", data);
     const result = await prisma.school.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
       skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
