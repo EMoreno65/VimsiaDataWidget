@@ -6,7 +6,7 @@ interface ApiResponse {
 
 const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
-  const [uploadStatus, setUploadStatus] = useState<string>('')''
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   // useEffect means the action inside will run once when the component mounts
   // the component mounting means the first time it appears on the screen
