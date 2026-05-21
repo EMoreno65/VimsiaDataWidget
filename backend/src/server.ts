@@ -7,11 +7,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { parse } from 'csv-parse/sync'; // Import the synchronous CSV parser from the csv-parse library
 import pg from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config(); // Load environment variables from .env file
+// Load .env from the workspace root (parent of backend directory)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 console.log("✅ server.ts is loading...");
-// console.log("DATABASE_URL:", process.env.DATABASE_URL ? "✓ loaded" : "✗ missing");
+console.log("DATABASE_URL:", process.env.DATABASE_URL ? "✓ loaded" : "✗ missing");
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
