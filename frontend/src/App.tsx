@@ -47,6 +47,9 @@ const App: React.FC = () => {
         <input type="file" id="csvFileInput" accept=".csv" onChange={handleFileChange} />
       </div>
       <p>{uploadStatus}</p>
+      <>
+      <button type="button" onClick={() => console.log('Chart generation clicked')}>Click here to generate chart</button> 
+      </>
     </>
   );
 };
