@@ -12,8 +12,6 @@ import path from 'path';
 // Load .env from the workspace root (parent of backend directory)
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-console.log("✅ server.ts is loading...");
-console.log("DATABASE_URL:", process.env.DATABASE_URL ? "✓ loaded" : "✗ missing");
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -78,6 +76,10 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
     res.status(500).json({ status: 'error', message: 'Failed to process CSV' });
   }
 });
+
+app.get('/api/make-chart', (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+  res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
+})
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });
