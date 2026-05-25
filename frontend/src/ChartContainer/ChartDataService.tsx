@@ -6,7 +6,7 @@ type PieChartData = {
 }
 
 export async function fetchPieChartData(): Promise<PieChartData[]> {
-    const response = await fetch('http://localhost:4000/api/make-chart'); // This is where we would call the backend API to get the data for the pie chart. For now, it's just a placeholder endpoint
+    const response = await fetch('http://localhost:4001/api/make-chart'); // This is where we would call the backend API to get the data for the pie chart. For now, it's just a placeholder endpoint
     if (!response.ok) {
         throw new Error(`Error fetching pie chart data: ${response.statusText}`);
     }

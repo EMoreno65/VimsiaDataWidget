@@ -77,9 +77,32 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
   }
 });
 
-app.get('/api/make-chart', (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
-  res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
-})
+app.get('/api/make-chart', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+  console.log('Received request for chart data and it is: ', _req.body);
+  // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
+  const grouped = await prisma.testEnrollment.groupBy({
+    by: ['sisEnrollmentStatus'],
+    _count: {
+      sisEnrollmentStatus: true
+    }
+  });
+
+  type Grouped = {
+    sisEnrollmentStatus: string;
+    _count: {
+      sisEnrollmentStatus: number;
+    };
+  };
+
+  const typedGrouped = grouped as Grouped[];
+
+  const chartData = typedGrouped.map(item => ({ 
+    name: item.sisEnrollmentStatus, value: item._count.sisEnrollmentStatus 
+  }))
+
+  res.json(chartData); // Send the chart data back to the client as a JSON response, which will be used to render the charts on the frontend)
+}
+);
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });

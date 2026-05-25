@@ -10,11 +10,12 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [pieData, setPieData] = useState<any>(null); // State to hold the data for the pie chart, which we will fetch from the backend when the user clicks the button to generate the chart
+  const [multiBarData, setMultiBarData] = useState<any>(null); // State to hold the data for the multi-bar chart, which we will also fetch from the backend when the user clicks the button to generate that chart
 
   // useEffect means the action inside will run once when the component mounts
   // the component mounting means the first time it appears on the screen
   useEffect(() => {
-    fetch('http://localhost:4000/api/hello') // Backend api is local for now
+    fetch('http://localhost:4001/api/hello') // Backend api is local for now
       .then((res) => res.json()) // Parse the response as JSON, which is the format our backend sends data in
       .then((data: ApiResponse) => setMessage(data.message)) // Set the message state to the message we got from the backend, which will cause the component to re-render and show the new message
       .catch((err) => setMessage(`Error: ${err.message}`)); // If there's an error (like the bacykend isn't running), set the message to show the error instead
@@ -27,7 +28,7 @@ const App: React.FC = () => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('http://localhost:4000/api/upload-csv', {
+    const res = await fetch('http://localhost:4001/api/upload-csv', {
       method: 'POST',
       body: formData
     });
@@ -41,7 +42,19 @@ const App: React.FC = () => {
     }
   }
 
-  const handleGenerateChart = async () => {
+  const handleGeneratePieChart = async () => {
+    const result = await fetchPieChartData(); 
+    if (result) {
+      console.log('Chart data:', result);
+      setPieData(result);
+      // Here we would set the state for the chart data and render the PieChartComponent with that data as props
+    }
+    else {
+      console.error('Failed to fetch chart data');
+    }
+  }
+
+  const handleGenerateMultiBarChart = async () => {
     const result = await fetchPieChartData(); 
     if (result) {
       console.log('Chart data:', result);
@@ -63,8 +76,10 @@ const App: React.FC = () => {
       </div>
       <p>{uploadStatus}</p>
       <>
-      <button type="button" onClick={handleGenerateChart}>Click here to generate a pie chart</button> 
+      <button type="button" onClick={handleGeneratePieChart}>Click here to generate a pie chart</button> 
       {pieData && <PieChartComponent data={pieData} />} {/* This is where we would render the PieChartComponent and pass the fetched data as props */}
+      <button type="button" onClick={handleGenerateMultiBarChart}>Click here to generate a multi-bar chart</button>
+      {/* Here we would render the MultiBarChartComponent and pass the fetched data as props, similar to how we do it for the pie chart */}
       </>
     </>
   );
