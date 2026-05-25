@@ -111,3 +111,5 @@ app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that res
 app.listen(port, () => { // Start the server and listen on the specified port
   console.log(`Backend server listening on port ${port}`);
 });
+
+export default app; 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import PieChartComponent from './ChartContainer/PieChart';
-import { fetchPieChartData}  from './ChartContainer/ChartDataService'; // This is the function we created to fetch the data for the pie chart from the backend
+import PieChartComponent from './ChartContainer/PieChart.tsx';
+import { fetchPieChartData}  from './ChartContainer/ChartDataService.tsx'; // This is the function we created to fetch the data for the pie chart from the backend
 
 interface ApiResponse {
   message: string;
