@@ -27,6 +27,21 @@ app.use(express.json()); // This allows us to parse JSON bodies in requests, whi
 const prisma = new PrismaClient({ adapter }); // Create an instance of the Prisma Client to interact with the database
 const upload = multer({ storage: multer.memoryStorage() }); // Configure multer to store uploaded files in memory instead of saving them to disk
 
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok',
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error',
+      database: 'disconnected'
+    });
+  }
+});
+
 app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-csv, expecting a single file upload with the field name 'file'
   try {
     if (!req.file) {
