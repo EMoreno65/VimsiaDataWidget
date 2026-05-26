@@ -28,7 +28,7 @@ app.use(express.json()); // This allows us to parse JSON bodies in requests, whi
 const prisma = new PrismaClient({ adapter }); // Create an instance of the Prisma Client to interact with the database
 const upload = multer({ storage: multer.memoryStorage() }); // Configure multer to store uploaded files in memory instead of saving them to disk
 
-app.get('/', async (req, res) => {
+app.get(BACKEND_URL + '/', async (req, res) => {
   console.log("Root endpoint backend is running");
   res.json({ status: 'ok', message: 'Vimsia backend root endpoint' });
 });
