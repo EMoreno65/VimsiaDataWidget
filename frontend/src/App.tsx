@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PieChartComponent from './ChartContainer/PieChart.tsx';
-import { fetchPieChartData}  from './ChartContainer/ChartDataService.tsx'; // This is the function we created to fetch the data for the pie chart from the backend
+import { fetchPieChartData } from './ChartContainer/ChartDataService.tsx';
+
+const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
 
 interface ApiResponse {
   message: string;
@@ -9,79 +11,98 @@ interface ApiResponse {
 const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
   const [uploadStatus, setUploadStatus] = useState<string>('');
-  const [pieData, setPieData] = useState<any>(null); // State to hold the data for the pie chart, which we will fetch from the backend when the user clicks the button to generate the chart
-  const [multiBarData, setMultiBarData] = useState<any>(null); // State to hold the data for the multi-bar chart, which we will also fetch from the backend when the user clicks the button to generate that chart
+  const [pieData, setPieData] = useState<any>(null);
+  const [multiBarData, setMultiBarData] = useState<any>(null);
 
-  // useEffect means the action inside will run once when the component mounts
-  // the component mounting means the first time it appears on the screen
   useEffect(() => {
-    fetch('http://localhost:4001/api/hello') // Backend api is local for now
-      .then((res) => res.json()) // Parse the response as JSON, which is the format our backend sends data in
-      .then((data: ApiResponse) => setMessage(data.message)) // Set the message state to the message we got from the backend, which will cause the component to re-render and show the new message
-      .catch((err) => setMessage(`Error: ${err.message}`)); // If there's an error (like the bacykend isn't running), set the message to show the error instead
+    fetch(`${API_URL}/api/hello`)
+      .then((res) => res.json())
+      .then((data: ApiResponse) => setMessage(data.message))
+      .catch((err) => setMessage(`Error: ${err.message}`));
   }, []);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploadStatus('Uploading...');
+
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('http://localhost:4001/api/upload-csv', {
-      method: 'POST',
-      body: formData
-    });
-
-    const result = await res.json();
-    if (res.ok) {
-      setUploadStatus('Upload successful!');
+    try {
+      const res = await fetch(`${API_URL}/api/upload-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+      if (res.ok) {
+        setUploadStatus('Upload successful!');
+      } else {
+        setUploadStatus(`Upload failed: ${result.message}`);
+      }
+    } catch (err) {
+      setUploadStatus('Upload failed: could not reach server');
     }
-    else {
-      setUploadStatus(`Upload failed: ${result.message}`);
-    }
-  }
+  };
 
   const handleGeneratePieChart = async () => {
-    const result = await fetchPieChartData(); 
-    if (result) {
-      console.log('Chart data:', result);
-      setPieData(result);
-      // Here we would set the state for the chart data and render the PieChartComponent with that data as props
+    try {
+      const result = await fetchPieChartData();
+      if (result) {
+        console.log('Pie chart data:', result);
+        setPieData(result);
+      } else {
+        console.error('Failed to fetch pie chart data');
+      }
+    } catch (err) {
+      console.error('Error fetching pie chart data:', err);
     }
-    else {
-      console.error('Failed to fetch chart data');
-    }
-  }
+  };
 
   const handleGenerateMultiBarChart = async () => {
-    const result = await fetchPieChartData(); 
-    if (result) {
-      console.log('Chart data:', result);
-      setPieData(result);
-      // Here we would set the state for the chart data and render the PieChartComponent with that data as props
+    try {
+      const result = await fetchPieChartData();
+      if (result) {
+        console.log('Multi-bar chart data:', result);
+        setMultiBarData(result);
+      } else {
+        console.error('Failed to fetch multi-bar chart data');
+      }
+    } catch (err) {
+      console.error('Error fetching multi-bar chart data:', err);
     }
-    else {
-      console.error('Failed to fetch chart data');
-    }
-  }
+  };
 
   return (
-    <><div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>Full Stack App</h1>
-      <p>Message from backend: <strong>{message}</strong></p>
-    </div><div>
-        <label htmlFor="csvFileInput">Choose a CSV file to upload:</label>
-        <input type="file" id="csvFileInput" accept=".csv" onChange={handleFileChange} />
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h1>Vimsia Dashboard</h1>
+      <p>Backend status: <strong>{message}</strong></p>
+
+      <div style={{ marginBottom: '20px' }}>
+        <label htmlFor="csvFileInput">Upload a CSV file: </label>
+        <input
+          type="file"
+          id="csvFileInput"
+          accept=".csv"
+          onChange={handleFileChange}
+        />
+        {uploadStatus && <p>{uploadStatus}</p>}
       </div>
-      <p>{uploadStatus}</p>
-      <>
-      <button type="button" onClick={handleGeneratePieChart}>Click here to generate a pie chart</button> 
-      {pieData && <PieChartComponent data={pieData} />} {/* This is where we would render the PieChartComponent and pass the fetched data as props */}
-      <button type="button" onClick={handleGenerateMultiBarChart}>Click here to generate a multi-bar chart</button>
-      {/* Here we would render the MultiBarChartComponent and pass the fetched data as props, similar to how we do it for the pie chart */}
-      </>
-    </>
+
+      <div style={{ marginBottom: '20px' }}>
+        <button type="button" onClick={handleGeneratePieChart}>
+          Generate pie chart
+        </button>
+        {pieData && <PieChartComponent data={pieData} />}
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <button type="button" onClick={handleGenerateMultiBarChart}>
+          Generate multi-bar chart
+        </button>
+        {multiBarData && <PieChartComponent data={multiBarData} />}
+      </div>
+    </div>
   );
 };
 

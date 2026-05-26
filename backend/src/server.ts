@@ -22,7 +22,11 @@ const adapter = new PrismaPg(pool);
 const app = express();
 const port = process.env.PORT || 4000; // We're using port 4000 for now, should be changed when given a real port by the hosting service
 
-app.use(cors({ origin: BACKEND_URL })); // Permission to access backend from frontend, should be changed when frontend is hosted on a different domain
+app.use(cors({ origin: [
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://localhost:4000',
+ ] })); // Permission to access backend from frontend, should be changed when frontend is hosted on a different domain
 app.use(express.json()); // This allows us to parse JSON bodies in requests, which is important for handling API requests that send data in JSON format
 
 const prisma = new PrismaClient({ adapter }); // Create an instance of the Prisma Client to interact with the database
