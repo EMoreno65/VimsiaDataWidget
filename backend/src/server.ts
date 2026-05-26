@@ -28,12 +28,12 @@ app.use(express.json()); // This allows us to parse JSON bodies in requests, whi
 const prisma = new PrismaClient({ adapter }); // Create an instance of the Prisma Client to interact with the database
 const upload = multer({ storage: multer.memoryStorage() }); // Configure multer to store uploaded files in memory instead of saving them to disk
 
-app.get(BACKEND_URL + '/', async (req, res) => {
+app.get('/', async (req, res) => {
   console.log("Root endpoint backend is running");
   res.json({ status: 'ok', message: 'Vimsia backend root endpoint' });
 });
 
-app.get(BACKEND_URL + '/api/health', async (req, res) => {
+app.get('/api/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ 
@@ -48,7 +48,7 @@ app.get(BACKEND_URL + '/api/health', async (req, res) => {
   }
 });
 
-app.post(BACKEND_URL + '/api/upload-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-csv, expecting a single file upload with the field name 'file'
+app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-csv, expecting a single file upload with the field name 'file'
   try {
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No file uploaded'});
@@ -98,7 +98,7 @@ app.post(BACKEND_URL + '/api/upload-csv', upload.single('file'), async (req: Req
   }
 });
 
-app.get(BACKEND_URL + '/api/make-chart', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+app.get('/api/make-chart', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
   console.log('Received request for chart data and it is: ', _req.body);
   // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
   const grouped = await prisma.testEnrollment.groupBy({
@@ -125,7 +125,7 @@ app.get(BACKEND_URL + '/api/make-chart', async (_req, res) => { // This goes int
 }
 );
 
-app.get(BACKEND_URL + '/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
+app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });
 });
 
