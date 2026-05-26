@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import PieChartComponent from './ChartContainer/PieChart.tsx';
-import { fetchPieChartData } from './ChartContainer/ChartDataService.tsx';
+import MultiBarChartComponent from './ChartContainer/MultiBarChart.tsx';
+import BarChartComponent from './ChartContainer/BarChart.tsx';
+import LineGraphComponent from './ChartContainer/LineGraph.tsx';
+import { fetchPieChartData, fetchMultiBarChartData, fetchBarChartData, fetchLineGraphData } from './ChartContainer/ChartDataService.tsx';
 
 const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
 
@@ -13,6 +16,8 @@ const App: React.FC = () => {
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [pieData, setPieData] = useState<any>(null);
   const [multiBarData, setMultiBarData] = useState<any>(null);
+  const [barChartData, setBarChartData] = useState<any>(null);
+  const [lineGraphData, setLineGraphData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -61,7 +66,7 @@ const App: React.FC = () => {
 
   const handleGenerateMultiBarChart = async () => {
     try {
-      const result = await fetchPieChartData();
+      const result = await fetchMultiBarChartData();
       if (result) {
         console.log('Multi-bar chart data:', result);
         setMultiBarData(result);
@@ -70,6 +75,34 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching multi-bar chart data:', err);
+    }
+  };
+
+  const handleGenerateBarChart = async () => {
+    try {
+      const result = await fetchBarChartData();
+      if (result) {
+        console.log('Bar chart data:', result);
+        setBarChartData(result);
+      } else {
+        console.error('Failed to fetch bar chart data');
+      }
+    } catch (err) {
+      console.error('Error fetching bar chart data:', err);
+    }
+  };
+
+  const handleGenerateLineGraph = async () => {
+    try {
+      const result = await fetchLineGraphData();
+      if (result) {
+        console.log('Line graph data:', result);
+        setLineGraphData(result);
+      } else {
+        console.error('Failed to fetch line graph data');
+      }
+    } catch (err) {
+      console.error('Error fetching line graph data:', err);
     }
   };
 
@@ -100,7 +133,19 @@ const App: React.FC = () => {
         <button type="button" onClick={handleGenerateMultiBarChart}>
           Generate multi-bar chart
         </button>
-        {multiBarData && <PieChartComponent data={multiBarData} />}
+        {multiBarData && <MultiBarChartComponent data={multiBarData} />}
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button type="button" onClick={handleGenerateBarChart}>
+          Generate Bar Chart
+        </button>
+        {barChartData && <BarChartComponent data={barChartData} />}
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button type="button" onClick={handleGenerateLineGraph}>
+          Generate Line Graph
+        </button>
+        {lineGraphData && <LineGraphComponent data={lineGraphData} />}
       </div>
     </div>
   );
