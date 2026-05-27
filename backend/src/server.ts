@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load .env from the workspace root (parent of backend directory)
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const BACKEND_URL = process.env.VITE_API_URL;
 
@@ -78,7 +78,8 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
           'Student Name': 'studentName',
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
-          'Grade': 'grade'
+          'Grade': 'grade',
+          'Term Name': 'termName'
         }
         const fieldName = fieldMap[header];
         if (fieldName) {
@@ -87,6 +88,7 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
       })
       data.push(obj as Prisma.TestEnrollmentCreateManyInput);
     })
+    console.log("DATABASE_URL:", process.env.DATABASE_URL);
     // console.log("Data is ", data);
     const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
@@ -102,28 +104,70 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
   }
 });
 
-app.get('/api/make-chart', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
-  console.log('Received request for chart data and it is: ', _req.body);
+
+app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+  console.log('Received request for multi bar chart data and it is: ', _req.body);
   // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
   const grouped = await prisma.testEnrollment.groupBy({
-    by: ['sisEnrollmentStatus'],
+    by: ['termName', 'grade'],
     _count: {
-      sisEnrollmentStatus: true
+      grade: true
     }
   });
 
-  type Grouped = {
-    sisEnrollmentStatus: string;
+  const transformed: Record<string, any> = {};
+
+  grouped.forEach(item => {
+    const term = item.termName;
+    const grade = item.grade;
+    const count = item._count.grade;
+
+    // Create row if it doesn't exist yet
+    if (!transformed[term]) {
+      transformed[term] = {
+        termName: term
+      };
+    }
+
+    // Add grade count dynamically
+    transformed[term][grade] = count;
+  });
+
+  const chartData = Object.values(transformed);
+
+  res.json(chartData); // Send the chart data back to the client as a JSON response, which will be used to render the charts on the frontend)
+}
+);
+
+app.get('/api/make-enrollment-line-capacity', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+  console.log('Received request for multi bar chart data and it is: ', _req.body);
+  // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
+  const grouped = await prisma.testEnrollment.groupBy({
+    by: ['termName', 'grade'],
     _count: {
-      sisEnrollmentStatus: number;
-    };
-  };
+      grade: true
+    }
+  });
 
-  const typedGrouped = grouped as Grouped[];
+  const transformed: Record<string, any> = {};
 
-  const chartData = typedGrouped.map(item => ({ 
-    name: item.sisEnrollmentStatus, value: item._count.sisEnrollmentStatus 
-  }))
+  grouped.forEach(item => {
+    const term = item.termName;
+    const grade = item.grade;
+    const count = item._count.grade;
+
+    // Create row if it doesn't exist yet
+    if (!transformed[term]) {
+      transformed[term] = {
+        termName: term
+      };
+    }
+
+    // Add grade count dynamically
+    transformed[term][grade] = count;
+  });
+
+  const chartData = Object.values(transformed);
 
   res.json(chartData); // Send the chart data back to the client as a JSON response, which will be used to render the charts on the frontend)
 }

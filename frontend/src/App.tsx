@@ -7,6 +7,8 @@ import { fetchPieChartData, fetchMultiBarChartData, fetchBarChartData, fetchLine
 
 const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
 
+// Note: I'd like to have an api for every individual chart. For example. the enrollment multi-bar will be its own api.
+
 interface ApiResponse {
   message: string;
 }
@@ -20,7 +22,7 @@ const App: React.FC = () => {
   const [lineGraphData, setLineGraphData] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/hello`)
+    fetch('http://localhost:4001/api/hello')
       .then((res) => res.json())
       .then((data: ApiResponse) => setMessage(data.message))
       .catch((err) => setMessage(`Error: ${err.message}`));
@@ -35,7 +37,7 @@ const App: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`${API_URL}/api/upload-csv`, {
+      const res = await fetch(`http://localhost:4001/api/upload-csv`, {
         method: 'POST',
         body: formData
       });
@@ -104,6 +106,17 @@ const App: React.FC = () => {
     } catch (err) {
       console.error('Error fetching line graph data:', err);
     }
+  };
+
+  const downloadChart = async () => {
+    if (!chartRef.current) return;
+
+    const dataUrl = await htmlToImage.toPng(chartRef.current);
+
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "chart.png";
+    link.click();
   };
 
   return (

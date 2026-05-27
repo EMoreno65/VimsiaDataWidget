@@ -18,6 +18,7 @@ model TestEnrollment {
   sisEnrollmentStatus    String
   sisStudentType         String
   grade                  String
+  termName               String
 }
 
 
