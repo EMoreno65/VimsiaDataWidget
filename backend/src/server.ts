@@ -111,7 +111,7 @@ app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes in
   const grouped = await prisma.testEnrollment.groupBy({
     by: ['termName', 'grade'],
     _count: {
-      grade: true
+      grade: true,
     }
   });
 
@@ -140,38 +140,49 @@ app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes in
 );
 
 app.get('/api/make-enrollment-line-capacity', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
-  console.log('Received request for multi bar chart data and it is: ', _req.body);
-  // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
-  const grouped = await prisma.testEnrollment.groupBy({
+  const grade_capacities = {
+    '1st': 20,
+    '2nd': 20,
+    '3rd': 20,
+    '4th': 20,
+    '5th': 20,
+    '6th': 24,
+    '7th': 24,
+    '8th': 24,
+    '9th': 24,
+    '10th': 24,
+    '11th': 24,
+    '12th': 24,
+  }
+
+  const transformed: Record<string, any> = {};
+
+  const grouped = await prisma.testEnrollment.groupBy({ // The goal is to send back data with the percentages of capacity filled for the whole school as a line graph for each year
     by: ['termName', 'grade'],
     _count: {
       grade: true
     }
-  });
+  }); 
 
-  const transformed: Record<string, any> = {};
+  
 
   grouped.forEach(item => {
     const term = item.termName;
     const grade = item.grade;
     const count = item._count.grade;
-
-    // Create row if it doesn't exist yet
-    if (!transformed[term]) {
-      transformed[term] = {
-        termName: term
-      };
-    }
-
-    // Add grade count dynamically
-    transformed[term][grade] = count;
+    const capacity = grade_capacities[grade as keyof typeof grade_capacities];
+    const percentage = (count / capacity) * 100;
+    item._count!.grade = percentage; // We overwrite the count with the percentage so that the frontend can use this data to render the line graph of percentage of capacity filled for each grade level across years
+  
+    transformed[term] = percentage;
+  
   });
 
   const chartData = Object.values(transformed);
 
-  res.json(chartData); // Send the chart data back to the client as a JSON response, which will be used to render the charts on the frontend)
-}
-);
+  res.json(chartData);
+
+});
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });

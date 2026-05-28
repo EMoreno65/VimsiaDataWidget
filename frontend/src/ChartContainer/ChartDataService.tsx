@@ -49,7 +49,7 @@ export async function fetchBarChartData(): Promise<BarChartData[]> {
 }
 
 export async function fetchLineGraphData(): Promise<LineGraphData[]> {
-    const response = await fetch(`http://localhost:4001/api/make-chart`);
+    const response = await fetch(`http://localhost:4001/api/make-enrollment-line-capacity`);
     if (!response.ok) {
         throw new Error(`Error fetching line graph data: ${response.statusText}`);
     }
