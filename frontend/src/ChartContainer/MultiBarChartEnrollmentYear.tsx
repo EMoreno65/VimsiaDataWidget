@@ -45,7 +45,7 @@ const COLORS = [
 
 
 
-const MultiBarChartComponent: React.FC<Props> = ({
+const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
   data
 }) => {
 
@@ -147,4 +147,4 @@ const MultiBarChartComponent: React.FC<Props> = ({
   );
 };
 
-export default MultiBarChartComponent;
+export default MultiBarChartEnrollmentYearComponent;

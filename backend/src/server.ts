@@ -105,6 +105,7 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
 });
 
 
+// Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
   console.log('Received request for multi bar chart data and it is: ', _req.body);
   // res.json({ status: 'ok', message: 'Chart generation endpoint - to be implemented' });
@@ -139,49 +140,173 @@ app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes in
 }
 );
 
-app.get('/api/make-enrollment-line-capacity', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
+// Chart 2.3
+app.get('/api/make-enrollment-line-capacity', async (_req, res) => {
   const grade_capacities = {
-    '1st': 20,
-    '2nd': 20,
-    '3rd': 20,
-    '4th': 20,
-    '5th': 20,
-    '6th': 24,
-    '7th': 24,
-    '8th': 24,
-    '9th': 24,
-    '10th': 24,
-    '11th': 24,
-    '12th': 24,
-  }
+    '1st': 20, '2nd': 20, '3rd': 20, '4th': 20, '5th': 20,
+    '6th': 24, '7th': 24, '8th': 24, '9th': 24,
+    '10th': 24, '11th': 24, '12th': 24,
+  };
 
-  const transformed: Record<string, any> = {};
-
-  const grouped = await prisma.testEnrollment.groupBy({ // The goal is to send back data with the percentages of capacity filled for the whole school as a line graph for each year
+  const grouped = await prisma.testEnrollment.groupBy({
     by: ['termName', 'grade'],
-    _count: {
-      grade: true
-    }
-  }); 
+    _count: { grade: true }
+  });
 
-  
+  const termTotals: Record<string, { enrolled: number; capacity: number }> = {};
 
   grouped.forEach(item => {
     const term = item.termName;
     const grade = item.grade;
     const count = item._count.grade;
-    const capacity = grade_capacities[grade as keyof typeof grade_capacities];
-    const percentage = (count / capacity) * 100;
-    item._count!.grade = percentage; // We overwrite the count with the percentage so that the frontend can use this data to render the line graph of percentage of capacity filled for each grade level across years
-  
-    transformed[term] = percentage;
-  
+    const capacity = grade_capacities[grade as keyof typeof grade_capacities] ?? 0;
+
+    if (!termTotals[term]) {
+      termTotals[term] = { enrolled: 0, capacity: 0 };
+    }
+
+    termTotals[term].enrolled += count;
+    termTotals[term].capacity += capacity;
   });
 
-  const chartData = Object.values(transformed);
+  const chartData = Object.entries(termTotals)
+    .map(([term, { enrolled, capacity }]) => ({
+      name: term,
+      value: capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name)); 
 
   res.json(chartData);
+});
 
+// Chart 2.2
+app.get('/api/make-enrollment-line-division', async (_req, res) => {
+
+  const gradeDivisionMap: Record<string, string> = {
+    toddler: 'Casa',
+    primary: 'Primary',
+
+    '1st': 'LE',
+    '2nd': 'LE',
+    '3rd': 'LE',
+    '4th': 'UE',
+    '5th': 'UE',
+    '6th': 'MYP',
+    '7th': 'MYP',
+    '8th': 'MYP',
+    '9th': 'MYP',
+    '10th': 'MYP',
+    '11th': 'DP',
+    '12th': 'DP',
+  };
+
+  const grouped = await prisma.testEnrollment.groupBy({
+    by: ['termName', 'grade'],
+    _count: {
+      grade: true,
+    },
+  });
+
+  const termTotals: Record<string, Record<string, number>> = {};
+
+  grouped.forEach(item => {
+    const term = item.termName;
+    const grade = item.grade;
+    const count = item._count.grade;
+
+    const division = gradeDivisionMap[grade];
+
+    if (!division) return;
+
+    if (!termTotals[term]) {
+      termTotals[term] = {
+        'Casa': 0,
+        'Primary': 0,
+        'LE': 0,
+        'UE': 0,
+        'MYP': 0,
+        'DP': 0,
+      };
+    }
+
+    termTotals[term][division] += count;
+  });
+
+  const chartData = Object.entries(termTotals)
+    .map(([term, divisions]) => ({
+      name: term,
+      ...divisions,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json(chartData);
+});
+
+// Chart 2.4
+app.get('/api/make-multibar-enrollment-division', async (_req, res) => {
+
+  const gradeDivisionMap: Record<string, string> = {
+    toddler: 'Casa',
+    primary: 'Primary',
+
+    '1st': 'LE',
+    '2nd': 'LE',
+    '3rd': 'LE',
+    '4th': 'UE',
+    '5th': 'UE',
+    '6th': 'MYP',
+    '7th': 'MYP',
+    '8th': 'MYP',
+    '9th': 'MYP',
+    '10th': 'MYP',
+    '11th': 'DP',
+    '12th': 'DP',
+  };
+
+  const grouped = await prisma.testEnrollment.groupBy({
+    by: ['termName', 'grade'],
+    _count: {
+      grade: true,
+    },
+  });
+
+  const termTotals: Record<string, Record<string, number>> = {};
+
+  grouped.forEach(item => {
+    const term = item.termName;
+    const grade = item.grade;
+    const count = item._count.grade;
+
+    const division = gradeDivisionMap[grade];
+
+    if (!division) return;
+
+    if (!termTotals[term]) {
+      termTotals[term] = {
+        'Casa': 0,
+        'Primary': 0,
+        'LE': 0,
+        'UE': 0,
+        'MYP': 0,
+        'DP': 0,
+      };
+    }
+
+    termTotals[term][division] += count;
+  });
+
+  const divisions = ['Casa', 'Primary', 'LE', 'UE', 'MYP', 'DP'];
+  const terms = Object.keys(termTotals).sort((a, b) => a.localeCompare(b)); // Sort terms alphabetically to ensure consistent order
+
+  const chartData = divisions.map(division => {
+    const entry: Record<string, string | number> = { name: division }; // The 'name' field is used by the chart to identify each group
+    terms.forEach(term => {
+      entry[term] = termTotals[term]?.[division] ?? 0; // Add the count for this division and term, or 0 if there is no data
+    })
+    return entry;
+  })
+
+  res.json({ chartData, terms }); // Send the chart data and the list of terms back to the client as a JSON response, which will be used to render the multi-bar chart on the frontend
 });
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
