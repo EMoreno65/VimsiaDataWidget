@@ -31,6 +31,7 @@ app.use(cors({ origin: [
   'http://localhost:3001',
   'http://localhost:5173',
   'http://localhost:4000',
+  'https://vimsia-data-widget.vercel.app'
  ] })); // Permission to access backend from frontend, should be changed when frontend is hosted on a different domain
 app.use(express.json()); // This allows us to parse JSON bodies in requests, which is important for handling API requests that send data in JSON format
 
