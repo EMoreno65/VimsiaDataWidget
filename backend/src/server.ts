@@ -17,8 +17,6 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: path.resolve(__dirname, '../.env') });
 }
 
-const BACKEND_URL = process.env.VITE_API_URL;
-
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 });
