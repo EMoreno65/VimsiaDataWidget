@@ -11,8 +11,11 @@ import path from 'path';
 import cron from 'node-cron';
 import SftpClient from 'ssh2-sftp-client';
 
-// Load .env from the workspace root (parent of backend directory)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Load .env only for local/development environments. Production platforms
+// (like Railway) inject environment variables into `process.env` directly.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+}
 
 const BACKEND_URL = process.env.VITE_API_URL;
 

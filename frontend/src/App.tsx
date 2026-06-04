@@ -7,7 +7,7 @@ import { fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetc
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 
-const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
+const API_URL = process.env.VITE_API_URL;
 
 // Note: I'd like to have an api for every individual chart. For example. the enrollment multi-bar will be its own api.
 
@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const [enrollmentDivisionLineData, setEnrollmentDivisionLineData] = useState<any>(null);
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/hello')
+    fetch(`${API_URL}/api/hello`)
       .then((res) => res.json())
       .then((data: ApiResponse) => setMessage(data.message))
       .catch((err) => setMessage(`Error: ${err.message}`));
@@ -41,7 +41,7 @@ const App: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`http://localhost:4001/api/upload-csv`, {
+      const res = await fetch(`${API_URL}/api/upload-csv`, {
         method: 'POST',
         body: formData
       });

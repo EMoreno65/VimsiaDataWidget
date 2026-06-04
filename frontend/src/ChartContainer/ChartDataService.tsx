@@ -22,7 +22,7 @@ type LineGraphData = {
 }
 
 export async function fetchPieChartData(): Promise<PieChartData[]> {
-    const response = await fetch(`http://localhost:4001/api/make-chart`); // This is where we would call the backend API to get the data for the pie chart. For now, it's just a placeholder endpoint
+    const response = await fetch(`${API_URL}/api/make-chart`); // This is where we would call the backend API to get the data for the pie chart. For now, it's just a placeholder endpoint
     if (!response.ok) {
         throw new Error(`Error fetching pie chart data: ${response.statusText}`);
     }
@@ -31,7 +31,7 @@ export async function fetchPieChartData(): Promise<PieChartData[]> {
 }
 
 export async function fetchEnrollmentMultiBarData(): Promise<MultiChartData> {
-    const response = await fetch(`http://localhost:4001/api/make-enrollment-multi-bar`); // This is where we would call the backend API to get the data for the multi bar chart. For now, it's just a placeholder endpoint
+    const response = await fetch(`${API_URL}/api/make-enrollment-multi-bar`); // This is where we would call the backend API to get the data for the multi bar chart. For now, it's just a placeholder endpoint
     if (!response.ok) {
         throw new Error(`Error fetching multi bar chart data: ${response.statusText}`);
     }
@@ -40,7 +40,7 @@ export async function fetchEnrollmentMultiBarData(): Promise<MultiChartData> {
 }
 
 export async function fetchBarChartData(): Promise<BarChartData[]> {
-    const response = await fetch(`http://localhost:4001/api/make-chart`);
+    const response = await fetch(`${API_URL}/api/make-chart`);
     if (!response.ok) {
         throw new Error(`Error fetching bar chart data: ${response.statusText}`);
     }
@@ -49,7 +49,7 @@ export async function fetchBarChartData(): Promise<BarChartData[]> {
 }
 
 export async function fetchEnrollmentCapacityLineData(): Promise<LineGraphData[]> {
-    const response = await fetch(`http://localhost:4001/api/make-enrollment-line-capacity`);
+    const response = await fetch(`${API_URL}/api/make-enrollment-line-capacity`);
     if (!response.ok) {
         throw new Error(`Error fetching line graph data: ${response.statusText}`);
     }
@@ -58,7 +58,7 @@ export async function fetchEnrollmentCapacityLineData(): Promise<LineGraphData[]
 }
 
 export async function fetchEnrollmentDivisionLineData(): Promise<LineGraphData[]> {
-    const response = await fetch(`http://localhost:4001/api/make-enrollment-line-division`);
+    const response = await fetch(`${API_URL}/api/make-enrollment-line-division`);
     if (!response.ok) {
         throw new Error(`Error fetching line graph data: ${response.statusText}`);
     }
@@ -68,7 +68,7 @@ export async function fetchEnrollmentDivisionLineData(): Promise<LineGraphData[]
 
 export async function fetchEnrollmentDivisionMultiBarData(): Promise<MultiChartData> {
     console.log("Does the enrollment division multi bar fetch get called?");
-    const response = await fetch(`http://localhost:4001/api/make-multibar-enrollment-division`);
+    const response = await fetch(`${API_URL}/api/make-multibar-enrollment-division`);
     if (!response.ok) {
         throw new Error(`Error fetching multi bar chart data: ${response.statusText}`);
     }
