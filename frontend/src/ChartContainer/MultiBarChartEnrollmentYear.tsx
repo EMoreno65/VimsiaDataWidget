@@ -12,7 +12,6 @@ import {
 } from 'recharts';
 
 import { useRef } from "react";
-import * as htmlToImage from "html-to-image";
 
 
 type MultiChartData = Record<string, Record<string, number>>;
@@ -20,13 +19,6 @@ type MultiChartData = Record<string, Record<string, number>>;
 type Props = {
   data: MultiChartData;
 };
-
-const COLORS = [
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff8042'
-];
 
   const gradeColors: Record<string, string> = {
     "1st": "#6366f1",

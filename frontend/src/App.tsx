@@ -7,7 +7,8 @@ import { fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetc
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 
-const API_URL = process.env.VITE_API_URL;
+const API_URL = process.env.REACT_APP_API_URL;
+console.log('API_URL:', process.env.REACT_APP_API_URL);
 
 // Note: I'd like to have an api for every individual chart. For example. the enrollment multi-bar will be its own api.
 
@@ -139,17 +140,6 @@ const App: React.FC = () => {
     } catch (err) {
       console.error('Error fetching multi-bar chart data:', err);
     }
-  };
-
-  const downloadChart = async () => {
-    if (!chartRef.current) return;
-
-    const dataUrl = await htmlToImage.toPng(chartRef.current);
-
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = "chart.png";
-    link.click();
   };
 
   return (
