@@ -173,7 +173,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Chart cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, padding: '1.25rem 1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '1.25rem 1.5rem' }}>
         {[
           { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
           { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
