@@ -143,61 +143,60 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>Vimsia Dashboard</h1>
-      <p>Backend status: <strong>{message}</strong></p>
+    <div style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="csvFileInput">Upload a CSV file: </label>
-        <input
-          type="file"
-          id="csvFileInput"
-          accept=".csv"
-          onChange={handleFileChange}
-        />
-        {uploadStatus && <p>{uploadStatus}</p>}
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', borderBottom: '0.5px solid #e5e7eb' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, background: '#185FA5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#E6F1FB', fontSize: 16 }}>◉</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.3px' }}>Vimsia</div>
+            <div style={{ fontSize: 12, color: '#888', fontFamily: 'monospace' }}>analytics dashboard</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#16a34a', background: '#f0fdf4', padding: '5px 10px', borderRadius: 20 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
+          {message}
+        </div>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button type="button" onClick={handleGeneratePieChart}>
-          Generate pie chart
-        </button>
-        {pieData && <PieChartComponent data={pieData} />}
+      {/* Upload bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
+          <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
+          ↑ Choose CSV file
+        </label>
+        {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button type="button" onClick={handleGenerateEnrollmentMultiBarChart}>
-          Generate enrollment multi-bar chart by year
-        </button>
-        {enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} />}
-      </div>
-
-      <div>
-        <button type="button" onClick={handleGenerateEnrollmentDivisionLineData}>
-          Generate Enrollment vs Division Line Graph
-          </button>
-          {enrollmentDivisionLineData && <MultiLineGraphComponent data={enrollmentDivisionLineData} />}
-      </div>
-
-      <div>
-        <button type="button" onClick={handleGenerateEnrollmentDivisionMultiBarData}>
-          Generate Enrollment vs Division Multi-Bar Chart
-        </button>
-        {enrollmentDivisionMultiBarData && <MultiBarChartEnrollmentDivisionComponent chartData={enrollmentDivisionMultiBarData.chartData} terms={enrollmentDivisionMultiBarData.terms}
-/>}
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <button type="button" onClick={handleGenerateBarChart}>
-          Generate Bar Chart
-        </button>
-        {barChartData && <BarChartComponent data={barChartData} />}
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <button type="button" onClick={handleGenerateEnrollmentCapacityLineData}>
-          Generate Enrollment vs Capacity Line Graph
-        </button>
-        {enrollmentCapacityLineData && <LineGraphComponent data={enrollmentCapacityLineData} />}
+      {/* Chart cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, padding: '1.25rem 1.5rem' }}>
+        {[
+          { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
+          { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
+          { label: 'Enrollment · Division', title: 'Line graph', desc: 'Enrollment trends per division over time.', accent: '#854F0B', bg: '#FAEEDA', onClick: handleGenerateEnrollmentDivisionLineData, chart: enrollmentDivisionLineData && <MultiLineGraphComponent data={enrollmentDivisionLineData} /> },
+          { label: 'Enrollment · Division', title: 'Multi-bar chart', desc: 'Side-by-side comparison across divisions and terms.', accent: '#993C1D', bg: '#FAECE7', onClick: handleGenerateEnrollmentDivisionMultiBarData, chart: enrollmentDivisionMultiBarData && <MultiBarChartEnrollmentDivisionComponent chartData={enrollmentDivisionMultiBarData.chartData} terms={enrollmentDivisionMultiBarData.terms} /> },
+          { label: 'General', title: 'Bar chart', desc: 'Categorical comparison across your dataset.', accent: '#534AB7', bg: '#EEEDFE', onClick: handleGenerateBarChart, chart: barChartData && <BarChartComponent data={barChartData} /> },
+          { label: 'Capacity · Enrollment', title: 'Enrollment vs capacity', desc: 'Overlay enrollment against capacity limits.', accent: '#3B6D11', bg: '#EAF3DE', onClick: handleGenerateEnrollmentCapacityLineData, chart: enrollmentCapacityLineData && <LineGraphComponent data={enrollmentCapacityLineData} /> },
+        ].map(({ label, title, desc, accent, bg, onClick, chart }) => (
+          <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9ca3af', fontFamily: 'monospace', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{title}</div>
+              </div>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, flexShrink: 0 }}>◈</div>
+            </div>
+            <div style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>{desc}</div>
+            <button type="button" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto', fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}>
+              ▶ Generate
+            </button>
+            {chart}
+          </div>
+        ))}
       </div>
     </div>
   );
