@@ -78,12 +78,12 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
   // STEP 1:
   // Convert dictionary -> array for Recharts
 
-  const chartData = Object.entries(data).map(
-    ([groupName, subgroupDict]) => ({
+  const chartData = Object.entries(data).map( // This line takes the input data, which is a dictionary where keys are group names and values are dictionaries of subgroup names and their corresponding values, and converts it into an array of objects that Recharts can work with. Each object in the resulting array will have a 'group' property for the group name and additional properties for each subgroup with their corresponding values.
+    ([groupName, subgroupDict]) => ({ // For each entry in the input data, we take the group name and the corresponding subgroup dictionary and create a new object. The 'group' property is set to the group name, and we spread the subgroup dictionary to include all subgroup names as properties with their corresponding values.
 
-      group: groupName,
+      group: groupName, // This line creates a new property called 'group' in the resulting object and assigns it the value of 'groupName', which is the key from the original dictionary. This 'group' property will be used as the x-axis label in the bar chart.
 
-      ...subgroupDict
+      ...subgroupDict // This line uses the spread operator to take all key-value pairs from the 'subgroupDict' and add them as properties to the resulting object. Each key in 'subgroupDict' represents a subgroup (e.g., "1st", "2nd", etc.), and its corresponding value is the count for that subgroup. By spreading 'subgroupDict', we ensure that each subgroup becomes a separate property in the resulting object, which allows Recharts to access these values when rendering the bars in the chart.
     })
   );
 

@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DEV_DATABASE_URL,
 });
 
 const adapter = new PrismaPg(pool);
@@ -78,12 +78,21 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
         // obj[header] = row[index];
         // console.log("current object is ", obj);
         const fieldMap: Record<string, string> = {
-          'Inst Name': 'instName',
+          // 'Inst Name': 'instName',
+          // 'Student Name': 'studentName',
+          // 'SIS Enrollment Status': 'sisEnrollmentStatus',
+          // 'SIS Student Type': 'sisStudentType',
+          // 'Grade': 'grade',
+          // 'Term Name': 'termName'
           'Student Name': 'studentName',
+          'Grade': 'grade',
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
-          'Grade': 'grade',
-          'Term Name': 'termName'
+          'SIS Student Status': 'sisStudentStatus', // If it says, withdrawn, add to student attrition
+          'Tuition': 'tuition',
+          'Financial Aid': 'financialAid',
+          'Discounts - Staff': 'tuitionRemission',
+
         }
         const fieldName = fieldMap[header];
         if (fieldName) {
@@ -92,7 +101,7 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
       })
       data.push(obj as Prisma.TestEnrollmentCreateManyInput);
     })
-    console.log("DATABASE_URL:", process.env.DATABASE_URL);
+    console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
     // console.log("Data is ", data);
     const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
