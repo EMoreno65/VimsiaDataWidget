@@ -43,7 +43,31 @@ const App: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`${API_URL}/api/upload-csv`, {
+      const res = await fetch(`${API_URL}/api/upload-enrollment-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+      if (res.ok) {
+        setUploadStatus('Upload successful!');
+      } else {
+        setUploadStatus(`Upload failed: ${result.message}`);
+      }
+    } catch (err) {
+      setUploadStatus('Upload failed: could not reach server');
+    }
+  };
+
+  const handleFileChangeTest = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadStatus('Uploading...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_URL}/api/upload-finance-csv`, {
         method: 'POST',
         body: formData
       });
@@ -169,6 +193,16 @@ const App: React.FC = () => {
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
           <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
           ↑ Choose CSV file
+        </label>
+        {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
+      </div>
+
+      {/* Upload bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
+          <input type="file" accept=".csv" onChange={handleFileChangeTest} style={{ display: 'none' }} />
+          ↑ Choose CSV file THIS ONES FOR TESTING
         </label>
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>

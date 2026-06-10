@@ -56,7 +56,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-csv, expecting a single file upload with the field name 'file'
+app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-enrollment-csv, expecting a single file upload with the field name 'file'
   try {
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No file uploaded'});
@@ -116,6 +116,71 @@ app.post('/api/upload-csv', upload.single('file'), async (req: Request & { file?
     res.status(500).json({ status: 'error', message: 'Failed to process CSV' });
   }
 });
+
+app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-enrollment-csv, expecting a single file upload with the field name 'file'
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No file uploaded'});
+    }
+
+    const csvText = req.file.buffer.toString(); // Convert the uploaded file buffer to a string, which is necessary for parsing the CSV data
+    const rows = parse(csvText, {
+      skip_empty_lines: true, // This option tells the parser to ignore empty lines in the CSV, which can help prevent errors when processing the data
+      trim: true, // This option tells the parser to trim whitespace from the beginning and end of each field, which can help clean up the data before inserting it into the database
+      quote: '"', // explicitly handle double-quoted fields
+      relax_column_count: true,    
+    }) as string[][]; // We assert that the result of parsing will be an array of arrays of strings, which represents the rows and columns of the CSV data
+
+    // const headers = rows[0]; // The first row of the CSV is assumed to contain the headers, which we will use as keys for our data objects
+    const headers = rows[0].map(h => h.trim());
+    const data: Prisma.TestEnrollmentCreateManyInput[] = []; // Create an empty array to hold the data objects that we will create from the CSV rows
+    rows.slice(1).forEach((row) => { // Data is gonna be filled by going through each row and doing the actions below
+      // Build a loose object first to avoid strict type issues, then cast when pushing into the typed array
+      const obj: any = {}; // Create an empty object to hold the data for this row
+      headers.forEach((header: string, index: number) => { // This is basically going through each column title and associating the piece of data in that column with the column header
+        // obj[header] = row[index];
+        // console.log("current object is ", obj);
+        const fieldMap: Record<string, string> = {
+          // 'Inst Name': 'instName',
+          // 'Student Name': 'studentName',
+          // 'SIS Enrollment Status': 'sisEnrollmentStatus',
+          // 'SIS Student Type': 'sisStudentType',
+          // 'Grade': 'grade',
+          // 'Term Name': 'termName'
+          'Student Name': 'studentName',
+          'Grade': 'grade',
+          'SIS Enrollment Status': 'sisEnrollmentStatus',
+          'SIS Student Type': 'sisStudentType',
+          'SIS Student Status': 'sisStudentStatus', // If it says, withdrawn, add to student attrition
+          'Tuition': 'tuition',
+          'Financial Aid': 'financialAid',
+          'Discounts - Staff': 'tuitionRemission',
+
+        }
+        const fieldName = fieldMap[header];
+        if (fieldName) {
+          obj[fieldName] = row[index];
+        }
+      })
+      data.push(obj as Prisma.TestEnrollmentCreateManyInput);
+    })
+    console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
+    // console.log("Data is ", data);
+    const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
+      data, // The data to be inserted, which is the array of objects we created from the CSV rows
+      skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
+    })
+    if (result.count > 0) { // If the count of inserted records is greater than 0, it means that new records were successfully added to the database
+      res.json({ status: 'ok', message: 'CSV uploaded and processed successfully' }); // Send a JSON response back to the client indicating that the CSV was uploaded and processed successfully
+    }
+  }  
+  catch (err) {
+    console.error('Error processing CSV:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to process CSV' });
+  }
+});
+
+
 
 
 // Chart 2.1
