@@ -13,8 +13,10 @@ datasource db {
 
 model TestEnrollment {
   id                     Int                 @id @default(autoincrement())
+  instName               String?
   studentName            String
   grade                  String
+  termName               String
   sisEnrollmentStatus    String
   sisStudentType         String
   sisStudentStatus       String

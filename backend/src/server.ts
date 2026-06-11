@@ -78,20 +78,12 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
         // obj[header] = row[index];
         // console.log("current object is ", obj);
         const fieldMap: Record<string, string> = {
-          // 'Inst Name': 'instName',
-          // 'Student Name': 'studentName',
-          // 'SIS Enrollment Status': 'sisEnrollmentStatus',
-          // 'SIS Student Type': 'sisStudentType',
-          // 'Grade': 'grade',
-          // 'Term Name': 'termName'
+          'Inst Name': 'instName',
           'Student Name': 'studentName',
-          'Grade': 'grade',
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
-          'SIS Student Status': 'sisStudentStatus', // If it says, withdrawn, add to student attrition
-          'Tuition': 'tuition',
-          'Financial Aid': 'financialAid',
-          'Discounts - Staff': 'tuitionRemission',
+          'Grade': 'grade',
+          'Term Name': 'termName'
 
         }
         const fieldName = fieldMap[header];
@@ -123,7 +115,7 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
       return res.status(400).json({ status: 'error', message: 'No file uploaded'});
     }
 
-    const csvText = req.file.buffer.toString(); // Convert the uploaded file buffer to a string, which is necessary for parsing the CSV data
+    const csvText = req.file.buffer.toString('utf8').replace(/^\uFEFF/, '');
     const rows = parse(csvText, {
       skip_empty_lines: true, // This option tells the parser to ignore empty lines in the CSV, which can help prevent errors when processing the data
       trim: true, // This option tells the parser to trim whitespace from the beginning and end of each field, which can help clean up the data before inserting it into the database
@@ -141,21 +133,16 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
         // obj[header] = row[index];
         // console.log("current object is ", obj);
         const fieldMap: Record<string, string> = {
-          // 'Inst Name': 'instName',
-          // 'Student Name': 'studentName',
-          // 'SIS Enrollment Status': 'sisEnrollmentStatus',
-          // 'SIS Student Type': 'sisStudentType',
-          // 'Grade': 'grade',
-          // 'Term Name': 'termName'
+          'Inst Name': 'instName',
           'Student Name': 'studentName',
           'Grade': 'grade',
+          'Term Name': 'termName',
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
           'SIS Student Status': 'sisStudentStatus', // If it says, withdrawn, add to student attrition
           'Tuition': 'tuition',
           'Financial Aid': 'financialAid',
           'Discounts - Staff': 'tuitionRemission',
-
         }
         const fieldName = fieldMap[header];
         if (fieldName) {
@@ -395,74 +382,74 @@ app.listen(port, () => { // Start the server and listen on the specified port
   console.log(`Backend server listening on port ${port}`);
 });
 
-async function pollSftp() {
-  const sftp = new SftpClient();
-  try {
-    await sftp.connect({
-      host: process.env.SFTP_HOST,
-      port: 22,
-      username: process.env.SFTP_USERNAME,
-      password: process.env.SFTP_PASSWORD,
-    });
+// async function pollSftp() {
+//   const sftp = new SftpClient();
+//   try {
+//     await sftp.connect({
+//       host: process.env.SFTP_HOST,
+//       port: 22,
+//       username: process.env.SFTP_USERNAME,
+//       password: process.env.SFTP_PASSWORD,
+//     });
 
-    const files = await sftp.list(process.env.SFTP_UPLOAD_DIR!);
-    const csvFiles = files.filter(f => f.name.endsWith('.csv'));
+//     const files = await sftp.list(process.env.SFTP_UPLOAD_DIR!);
+//     const csvFiles = files.filter(f => f.name.endsWith('.csv'));
 
-    if (csvFiles.length === 0) {
-      console.log('No new CSV files found');
-      return;
-    }
+//     if (csvFiles.length === 0) {
+//       console.log('No new CSV files found');
+//       return;
+//     }
 
-    for (const file of csvFiles) {
-      const remotePath = `${process.env.SFTP_UPLOAD_DIR}/${file.name}`;
-      const processedPath = `${process.env.SFTP_PROCESSED_DIR}/${file.name}`;
+//     for (const file of csvFiles) {
+//       const remotePath = `${process.env.SFTP_UPLOAD_DIR}/${file.name}`;
+//       const processedPath = `${process.env.SFTP_PROCESSED_DIR}/${file.name}`;
 
-      console.log(`Processing: ${file.name}`);
-      const fileBuffer = await sftp.get(remotePath) as Buffer;
+//       console.log(`Processing: ${file.name}`);
+//       const fileBuffer = await sftp.get(remotePath) as Buffer;
 
-      const csvText = fileBuffer.toString();
-      const rows = parse(csvText, {
-        skip_empty_lines: true,
-        trim: true,
-      }) as string[][];
+//       const csvText = fileBuffer.toString();
+//       const rows = parse(csvText, {
+//         skip_empty_lines: true,
+//         trim: true,
+//       }) as string[][];
 
-      const headers = rows[0].map(h => h.trim());
-      const data: any[] = [];
+//       const headers = rows[0].map(h => h.trim());
+//       const data: any[] = [];
 
-      rows.slice(1).forEach((row) => {
-        const obj: any = {};
-        const fieldMap: Record<string, string> = {
-          'Inst Name': 'instName',
-          'Student Name': 'studentName',
-          'SIS Enrollment Status': 'sisEnrollmentStatus',
-          'SIS Student Type': 'sisStudentType',
-          'Grade': 'grade'
-        };
-        headers.forEach((header, index) => {
-          const fieldName = fieldMap[header];
-          if (fieldName) obj[fieldName] = row[index];
-        });
-        data.push(obj);
-      });
+//       rows.slice(1).forEach((row) => {
+//         const obj: any = {};
+//         const fieldMap: Record<string, string> = {
+//           'Inst Name': 'instName',
+//           'Student Name': 'studentName',
+//           'SIS Enrollment Status': 'sisEnrollmentStatus',
+//           'SIS Student Type': 'sisStudentType',
+//           'Grade': 'grade'
+//         };
+//         headers.forEach((header, index) => {
+//           const fieldName = fieldMap[header];
+//           if (fieldName) obj[fieldName] = row[index];
+//         });
+//         data.push(obj);
+//       });
 
-      await prisma.testEnrollment.createMany({
-        data,
-        skipDuplicates: true,
-      });
+//       await prisma.testEnrollment.createMany({
+//         data,
+//         skipDuplicates: true,
+//       });
 
-      await sftp.rename(remotePath, processedPath);
-      console.log(`Done: ${file.name}`);
-    }
-  } catch (err) {
-    console.error('SFTP poll error:', err);
-  } finally {
-    await sftp.end();
-  }
-}
+//       await sftp.rename(remotePath, processedPath);
+//       console.log(`Done: ${file.name}`);
+//     }
+//   } catch (err) {
+//     console.error('SFTP poll error:', err);
+//   } finally {
+//     await sftp.end();
+//   }
+// }
 
-cron.schedule('0 2 * * *', () => {
-  console.log('Running nightly SFTP poll...');
-  pollSftp();
-});
+// cron.schedule('0 2 * * *', () => {
+//   console.log('Running nightly SFTP poll...');
+//   pollSftp();
+// });
 
 export default app; 
