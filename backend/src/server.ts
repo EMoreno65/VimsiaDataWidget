@@ -70,6 +70,9 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
 
     // const headers = rows[0]; // The first row of the CSV is assumed to contain the headers, which we will use as keys for our data objects
     const headers = rows[0].map(h => h.trim());
+    // Helpful debug: show headers and a few rows so mismatched header names are obvious
+    console.log('upload-enrollment-csv headers:', headers);
+    console.log('upload-enrollment-csv sample rows:', rows.slice(1, 4));
     const data: Prisma.TestEnrollmentCreateManyInput[] = []; // Create an empty array to hold the data objects that we will create from the CSV rows
     rows.slice(1).forEach((row) => { // Data is gonna be filled by going through each row and doing the actions below
       // Build a loose object first to avoid strict type issues, then cast when pushing into the typed array
@@ -83,8 +86,7 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
           'Grade': 'grade',
-          'Term Name': 'termName'
-
+          'Term Name': 'termName',
         }
         const fieldName = fieldMap[header];
         if (fieldName) {
@@ -94,6 +96,7 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
       data.push(obj as Prisma.TestEnrollmentCreateManyInput);
     })
     console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
+
     // console.log("Data is ", data);
     const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
@@ -152,6 +155,12 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
       data.push(obj as Prisma.TestEnrollmentCreateManyInput);
     })
     console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
+
+    // const missingTermRows = data.filter(d => !d.termName || String(d.termName).trim() === '');
+    // if (missingTermRows.length > 0) {
+    //   console.error('upload-finance-csv: missing termName in', missingTermRows.length, 'rows. Sample:', missingTermRows.slice(0, 5));
+    //   return res.status(400).json({ status: 'error', message: `Missing termName in ${missingTermRows.length} rows`, sample: missingTermRows.slice(0, 5) });
+    // }
     // console.log("Data is ", data);
     const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows

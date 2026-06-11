@@ -16,13 +16,9 @@ model TestEnrollment {
   instName               String?
   studentName            String
   grade                  String
-  termName               String
   sisEnrollmentStatus    String
   sisStudentType         String
-  sisStudentStatus       String
-  tuition                String
-  financialAid           String
-  tuitionRemission       String
+  termName               String
 }
 
 

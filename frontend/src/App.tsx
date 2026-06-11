@@ -9,7 +9,7 @@ import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarC
 
 // const API_URL = process.env.REACT_APP_API_URL;
 const API_URL = 'http://localhost:4001';
-console.log('API_URL:', process.env.REACT_APP_API_URL);
+// console.log('API_URL:', process.env.REACT_APP_API_URL);
 
 // Note: I'd like to have an api for every individual chart. For example. the enrollment multi-bar will be its own api.
 

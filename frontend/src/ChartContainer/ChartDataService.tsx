@@ -1,6 +1,7 @@
 // I want all data from the CSV to be sent here and then have the necessart data for each chart type sent over as props
 
-const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
+// const API_URL = process.env.VITE_API_URL || 'https://vimsiadatawidget-production.up.railway.app';
+const API_URL = 'http://localhost:4001';
 
 type PieChartData = {
     name: string;
