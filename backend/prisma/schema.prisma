@@ -21,4 +21,27 @@ model TestEnrollment {
   termName               String
 }
 
+model FinanceData {
+  id                     Int                 @id @default(autoincrement())
+  instName               String?
+  studentName            String
+  grade                  String
+  sisEnrollmentStatus    String
+  sisStudentType         String?
+  sisStudentStatus       String
+  tuition                String
+  financialAid           String?
+  tuitionRemission       String?
+}
+
+model TuitionRate {
+  id        Int      @id @default(autoincrement())
+  termName  String
+  grade     String
+  amount    Decimal  @db.Decimal(10, 2)
+  updatedAt DateTime @updatedAt
+
+  @@unique([termName, grade])
+}
+
 

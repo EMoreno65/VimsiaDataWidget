@@ -77,3 +77,22 @@ export async function fetchEnrollmentDivisionMultiBarData(): Promise<MultiChartD
     
     return multiBarData; // This should return the data in the format that the MultiBarChart component expects, which is a dictionary where keys are group names and values are dictionaries of subgroup names and their corresponding values
 }
+
+export async function fetchFinaidBarData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/make-finaid-single-bar`);
+    if (!response.ok) {
+        throw new Error(`Error fetching financial aid bar chart data: ${response.statusText}`);
+    }
+    const finaidBarData = await response.json();
+    return finaidBarData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
+}
+
+export async function fetchTuitionGradeData(tuitionTerm: string): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/make-tuition-grade-bar?term=${encodeURIComponent(tuitionTerm)}`);
+    if (!response.ok) {
+        throw new Error(`Error fetching tuition by grade data: ${response.statusText}`);
+    }
+    const tuitionGradeData = await response.json();
+    console.log("Fetched tuition grade data:", tuitionGradeData);
+    return tuitionGradeData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
+}

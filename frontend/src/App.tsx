@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData } from './ChartContainer/ChartDataService.tsx';
+import { fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 
@@ -20,12 +20,15 @@ interface ApiResponse {
 const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [tuitionTerm, setTuitionTerm] = useState<string>('2025-2026');
   const [pieData, setPieData] = useState<any>(null);
   const [enrollmentMultiBarData, setEnrollmentMultiBarData] = useState<any>(null);
   const [enrollmentDivisionMultiBarData, setEnrollmentDivisionMultiBarData] = useState<any>(null);
   const [barChartData, setBarChartData] = useState<any>(null);
   const [enrollmentCapacityLineData, setEnrollmentCapacityLineData] = useState<any>(null);
   const [enrollmentDivisionLineData, setEnrollmentDivisionLineData] = useState<any>(null);
+  const [finaidBarData, setFinaidBarData] = useState<any>(null);
+  const [tuitionGradeData, setTuitionGradeData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -81,6 +84,35 @@ const App: React.FC = () => {
       setUploadStatus('Upload failed: could not reach server');
     }
   };
+
+  const handleTuitionScreenshot = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!tuitionTerm) {
+        setUploadStatus('Please select a term before uploading');
+        return;
+      }
+      setUploadStatus('Uploading...');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('term', tuitionTerm);
+
+      try {
+        const res = await fetch(`${API_URL}/api/upload-tuition-image`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (res.ok) {
+          setUploadStatus('Upload successful!');
+        } else {
+          setUploadStatus(`Upload failed: ${result.message}`);
+        }
+      } catch (err) {
+        setUploadStatus('Upload failed: could not reach server');
+      }
+  };   
 
   const handleGeneratePieChart = async () => {
     try {
@@ -152,6 +184,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateFinaidBarData = async () => {
+    try {
+      const result = await fetchFinaidBarData();
+      if (result) {
+        console.log('Financial aid bar chart data:', result);
+        setFinaidBarData(result);
+      } else {
+        console.error('Failed to fetch financial aid bar chart data');
+      }
+    } catch (err) {
+      console.error('Error fetching financial aid bar chart data:', err);
+    }
+  };
+
   const handleGenerateEnrollmentDivisionMultiBarData = async () => {
     try {
       const result = await fetchEnrollmentDivisionMultiBarData();
@@ -164,6 +210,17 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching multi-bar chart data:', err);
+    }
+  };
+
+  const handleGenerateTuitionGradeData = async () => {
+    try {
+      const result = await fetchTuitionGradeData(tuitionTerm);
+      if (result) {
+        setTuitionGradeData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching tuition by grade data:', err);
     }
   };
 
@@ -207,8 +264,36 @@ const App: React.FC = () => {
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <select
+          value={tuitionTerm}
+          onChange={(event) => setTuitionTerm(event.target.value)}
+          style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', fontSize: 13, color: '#111827' }}
+        >
+          <option value="2019-2020">2019-2020</option>
+          <option value="2020-2021">2020-2021</option>
+          <option value="2021-2022">2021-2022</option>
+          <option value="2022-2023">2022-2023</option>
+          <option value="2023-2024">2023-2024</option>
+          <option value="2024-2025">2024-2025</option>
+          <option value="2025-2026">2025-2026</option>
+          <option value="2026-2027">2026-2027</option>
+          <option value="2027-2028">2027-2028</option>
+          <option value="2028-2029">2028-2029</option>
+          <option value="2029-2030">2029-2030</option>
+          <option value="2030-2031">2030-2031</option>
+          <option value="2031-2032">2031-2032</option>
+        </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
+          <input type="file" accept=".png" onChange={handleTuitionScreenshot} style={{ display: 'none' }} />
+          ↑ Upload Tuition Screenshot here
+        </label>
+        {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
+      </div>
+
       {/* Chart cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, padding: '1.25rem 1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 12, padding: '1.25rem 1.5rem' }}>
         {[
           { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
           { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
@@ -216,6 +301,8 @@ const App: React.FC = () => {
           { label: 'Enrollment · Division', title: 'Multi-bar chart', desc: 'Side-by-side comparison across divisions and terms.', accent: '#993C1D', bg: '#FAECE7', onClick: handleGenerateEnrollmentDivisionMultiBarData, chart: enrollmentDivisionMultiBarData && <MultiBarChartEnrollmentDivisionComponent chartData={enrollmentDivisionMultiBarData.chartData} terms={enrollmentDivisionMultiBarData.terms} /> },
           { label: 'General', title: 'Bar chart', desc: 'Categorical comparison across your dataset.', accent: '#534AB7', bg: '#EEEDFE', onClick: handleGenerateBarChart, chart: barChartData && <BarChartComponent data={barChartData} /> },
           { label: 'Capacity · Enrollment', title: 'Enrollment vs capacity', desc: 'Overlay enrollment against capacity limits.', accent: '#3B6D11', bg: '#EAF3DE', onClick: handleGenerateEnrollmentCapacityLineData, chart: enrollmentCapacityLineData && <LineGraphComponent data={enrollmentCapacityLineData} /> },
+          { label: 'Financial Aid', title: 'Bar chart', desc: 'Comparison of financial aid distribution.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidBarData, chart: finaidBarData && <BarChartComponent data={finaidBarData} /> },
+          { label: 'Tuition by Grade (Year-Based)', title: 'Bar chart', desc: 'Comparison of tuition by grade for a given year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionGradeData, chart: tuitionGradeData && <BarChartComponent data={tuitionGradeData} /> },
         ].map(({ label, title, desc, accent, bg, onClick, chart }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

@@ -1,90 +1,29 @@
 import React from 'react';
-
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-type BarChartData = {
-    name: string;
-    value: number;
-};
-
 type Props = {
-  data: BarChartData[];
+  data: Record<string, number>;
 };
 
-const COLORS = [
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff8042'
-];
-
-const BarChartComponent: React.FC<Props> = ({
-  data
-}) => {
-  // STEP 1:
-  // Convert dictionary -> array for Recharts
-
-  const chartData = Object.entries(data).map(
-    ([groupName, subgroupDict]) => ({
-
-      group: groupName,
-
-      ...subgroupDict
-    })
-  );
-
-  // STEP 2:
-  // Get all subgroup names dynamically
-
-  const subgroupNames = new Set<string>();
-
-  Object.values(data).forEach((subgroupDict) => {
-
-    Object.keys(subgroupDict).forEach((subgroup) => {
-
-      subgroupNames.add(subgroup);
-
-    });
-
-  });
+const BarChartComponent: React.FC<Props> = ({ data }) => {
+  const chartData = Object.entries(data).map(([grade, value]) => ({
+    grade,
+    value,
+  }));
 
   return (
-
     <ResponsiveContainer width="100%" height={400}>
-
       <BarChart data={chartData}>
-
         <CartesianGrid strokeDasharray="3 3" />
-
-        <XAxis dataKey="group" />
-
+        <XAxis dataKey="grade" />
         <YAxis />
-
-        <Tooltip />
-
+        <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
         <Legend />
-
-        {[...subgroupNames].map((subgroup, index) => (
-
-          <Bar
-            key={subgroup}
-            dataKey={subgroup}
-            fill={COLORS[index % COLORS.length]}
-          />
-
-        ))}
-
+        <Bar dataKey="value" name="Financial Aid" fill="#8884d8" />
       </BarChart>
-
     </ResponsiveContainer>
   );
 };

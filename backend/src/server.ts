@@ -10,12 +10,15 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cron from 'node-cron';
 import SftpClient from 'ssh2-sftp-client';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Load .env only for local/development environments. Production platforms
 // (like Railway) inject environment variables into `process.env` directly.
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: path.resolve(__dirname, '../.env') });
 }
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const pool = new pg.Pool({
   connectionString: process.env.DEV_DATABASE_URL,
@@ -53,6 +56,80 @@ app.get('/api/health', async (req, res) => {
       status: 'error',
       database: 'disconnected'
     });
+  }
+});
+
+app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No image file uploaded' });
+    }
+
+    const imageData = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType, data: imageData }
+          },
+          {
+            type: 'text',
+            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]'
+          }
+        ]
+      }]
+    });
+
+    const termName = (req.body.term as string | undefined)?.trim();
+    if (!termName) {
+      return res.status(400).json({ status: 'error', message: 'No term selected for tuition upload' });
+    }
+
+    const raw = message.content
+      .map(block => block.type === 'text' ? block.text : '')
+      .join(' ')
+      .replace(/```json|```/g, '')
+      .trim();
+
+    if (!raw) {
+      throw new Error('Anthropic response did not include any text output');
+    }
+    const rows: { grade: string; amount: number | null }[] = JSON.parse(raw);
+
+    const validRows = rows.filter((row): row is { grade: string; amount: number } => {
+      return Boolean(row.grade?.toString().trim()) && row.amount != null && !Number.isNaN(row.amount);
+    });
+
+    if (validRows.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No valid tuition rows found in OCR output' });
+    }
+
+    const data: Prisma.TuitionRateCreateManyInput[] = validRows.map(row => ({
+      grade: row.grade,
+      amount: row.amount.toString(),
+      termName,
+    }));
+
+    const result = await prisma.tuitionRate.createMany({
+      data,
+      skipDuplicates: true,
+    });
+
+    if (result.count > 0) {
+      res.json({ status: 'ok', message: `Inserted ${result.count} tuition rates` });
+    } else {
+      res.json({ status: 'ok', message: 'No new records inserted (possible duplicates)' });
+    }
+
+  } catch (err) {
+    console.error('Error processing tuition image:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to process image' });
   }
 });
 
@@ -128,7 +205,7 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
 
     // const headers = rows[0]; // The first row of the CSV is assumed to contain the headers, which we will use as keys for our data objects
     const headers = rows[0].map(h => h.trim());
-    const data: Prisma.TestEnrollmentCreateManyInput[] = []; // Create an empty array to hold the data objects that we will create from the CSV rows
+    const data: Prisma.FinanceDataCreateManyInput[] = []; // Create an empty array to hold the data objects that we will create from the CSV rows
     rows.slice(1).forEach((row) => { // Data is gonna be filled by going through each row and doing the actions below
       // Build a loose object first to avoid strict type issues, then cast when pushing into the typed array
       const obj: any = {}; // Create an empty object to hold the data for this row
@@ -139,7 +216,6 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
           'Inst Name': 'instName',
           'Student Name': 'studentName',
           'Grade': 'grade',
-          'Term Name': 'termName',
           'SIS Enrollment Status': 'sisEnrollmentStatus',
           'SIS Student Type': 'sisStudentType',
           'SIS Student Status': 'sisStudentStatus', // If it says, withdrawn, add to student attrition
@@ -152,7 +228,7 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
           obj[fieldName] = row[index];
         }
       })
-      data.push(obj as Prisma.TestEnrollmentCreateManyInput);
+      data.push(obj as Prisma.FinanceDataCreateManyInput);
     })
     console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
 
@@ -162,7 +238,7 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
     //   return res.status(400).json({ status: 'error', message: `Missing termName in ${missingTermRows.length} rows`, sample: missingTermRows.slice(0, 5) });
     // }
     // console.log("Data is ", data);
-    const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
+    const result = await prisma.financeData.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
       data, // The data to be inserted, which is the array of objects we created from the CSV rows
       skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
     })
@@ -176,8 +252,59 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
   }
 });
 
+// Chart 3.1
+app.get('/api/make-tuition-grade-bar', async (req, res) => {
+  const term = req.query.term as string | undefined;
+  if (!term) {
+    return res.status(400).json({ status: 'error', message: 'Missing term query parameter' });
+  }
 
+  const chartData: Record<string, number> = {};
 
+  const allData = await prisma.tuitionRate.findMany({
+    where: { termName: term },
+    select: { grade: true, amount: true }
+  })
+
+  allData.forEach(item => {
+    const grade = item.grade;
+    const amount = parseFloat(item.amount.toString()) || 0;
+    chartData[grade] = amount;
+  })
+
+  res.json(chartData);
+});
+
+// Chart 4.2
+app.get('/api/make-finaid-single-bar', async (_req, res) => {
+  const allData = await prisma.financeData.findMany({
+    select: { grade: true, financialAid: true }
+  });
+
+  const chartData: Record<string, number> = {};
+
+  allData.forEach(item => {
+    const grade = item.grade;
+    const aid = parseFloat(item.financialAid?.toString() || '0') || 0;
+    chartData[grade] = (chartData[grade] || 0) + aid;
+  });
+
+  res.json(chartData);
+});
+
+// Chart 4.6 
+app.get('/api/finaid-tuition-single-bar', async (_req, res) => {
+  const allData = await prisma.financeData.findMany({
+    select: { grade: true, financialAid: true, tuition: true }
+  });
+
+  const chartData: Record<string, number> = {};
+
+  allData.forEach(item => {
+    // I need to caluculate total financial aid given by each grade and divide it by tuition
+    
+  })
+})
 
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
