@@ -96,3 +96,12 @@ export async function fetchTuitionGradeData(tuitionTerm: string): Promise<BarCha
     console.log("Fetched tuition grade data:", tuitionGradeData);
     return tuitionGradeData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
 }
+
+export async function fetchHighestTuitionYearData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/highest-tuition-year`);
+    if (!response.ok) {
+        throw new Error(`Error fetching highest tuition by year data: ${response.statusText}`);
+    }
+    const highestTuitionYearData = await response.json();
+    return highestTuitionYearData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
+}

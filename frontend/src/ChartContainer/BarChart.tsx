@@ -22,7 +22,7 @@ const BarChartComponent: React.FC<Props> = ({ data }) => {
         <YAxis />
         <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
         <Legend />
-        <Bar dataKey="value" name="Financial Aid" fill="#8884d8" />
+        <Bar dataKey="value" fill="#8884d8" />
       </BarChart>
     </ResponsiveContainer>
   );

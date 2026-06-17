@@ -275,6 +275,26 @@ app.get('/api/make-tuition-grade-bar', async (req, res) => {
   res.json(chartData);
 });
 
+// Chart 3.2 
+app.get('/api/highest-tuition-year', async (_req, res) => {
+  const result = await prisma.tuitionRate.groupBy({
+    by: ['termName'],
+    _max: {
+      amount: true,
+    },    
+  });
+
+  const chartData: Record<string, number> = {};
+
+  result.forEach(item => {
+    const term = item.termName;
+    const amount = item._max.amount ? parseFloat(item._max.amount.toString()) : 0;
+    chartData[term] = amount;
+  });
+
+  res.json(chartData);
+});
+
 // Chart 4.2
 app.get('/api/make-finaid-single-bar', async (_req, res) => {
   const allData = await prisma.financeData.findMany({

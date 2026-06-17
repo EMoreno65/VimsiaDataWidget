@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData } from './ChartContainer/ChartDataService.tsx';
+import { fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 
@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [enrollmentDivisionLineData, setEnrollmentDivisionLineData] = useState<any>(null);
   const [finaidBarData, setFinaidBarData] = useState<any>(null);
   const [tuitionGradeData, setTuitionGradeData] = useState<any>(null);
+  const [highestTuitionYearData, setHighestTuitionYearData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -224,6 +225,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateHighestTuitionYear = async () => {
+    try {
+      const result = await fetchHighestTuitionYearData();
+      if (result) {
+        setHighestTuitionYearData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching highest tuition by year data:', err);
+    }
+  };
+
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
 
@@ -303,6 +315,7 @@ const App: React.FC = () => {
           { label: 'Capacity · Enrollment', title: 'Enrollment vs capacity', desc: 'Overlay enrollment against capacity limits.', accent: '#3B6D11', bg: '#EAF3DE', onClick: handleGenerateEnrollmentCapacityLineData, chart: enrollmentCapacityLineData && <LineGraphComponent data={enrollmentCapacityLineData} /> },
           { label: 'Financial Aid', title: 'Bar chart', desc: 'Comparison of financial aid distribution.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidBarData, chart: finaidBarData && <BarChartComponent data={finaidBarData} /> },
           { label: 'Tuition by Grade (Year-Based)', title: 'Bar chart', desc: 'Comparison of tuition by grade for a given year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionGradeData, chart: tuitionGradeData && <BarChartComponent data={tuitionGradeData} /> },
+          { label: 'Highest Tuition by Year', title: 'Bar chart', desc: 'Comparison of highest tuition by year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateHighestTuitionYear, chart: highestTuitionYearData && <BarChartComponent data={highestTuitionYearData} /> },
         ].map(({ label, title, desc, accent, bg, onClick, chart }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
