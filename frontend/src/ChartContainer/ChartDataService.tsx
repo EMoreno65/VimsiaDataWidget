@@ -105,3 +105,12 @@ export async function fetchHighestTuitionYearData(): Promise<BarChartData[]> {
     const highestTuitionYearData = await response.json();
     return highestTuitionYearData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
 }
+
+export async function fetchTuitionIncreaseData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/tuition-increase-by-year`);
+    if (!response.ok) {
+        throw new Error(`Error fetching tuition increase by year data: ${response.statusText}`);
+    }
+    const tuitionIncreaseData = await response.json();
+    return tuitionIncreaseData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
+}

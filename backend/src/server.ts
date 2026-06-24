@@ -59,6 +59,85 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+app.post('/api/upload-fee-image', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No image file uploaded' })
+    }
+
+    const imageData = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType, data: imageData }
+          },
+          {
+            type: 'text',
+            text: 'Extract all grade/level and dollar fee amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 500.00}, ...]. If the left column says anything like "Primary", "P1", "P2", or "P3", normalize the grade name to "Kindergarten". Do not do this for Toddler.'
+          }
+        ]
+      }]
+    });
+
+    const termName = req.body.term;
+
+    const raw = message.content
+      .map(block => block.type === 'text' ? block.text : '') 
+      .join(' ')
+      .replace(/```json|```/g, '')
+      .trim();
+
+    if (!raw) {
+      throw new Error('Failed');
+    }
+
+    const rows: { grade: string; amount: number | null }[] = JSON.parse(raw);
+    const validRows = rows.filter((row): row is { grade: string; amount: number } => {
+      return Boolean(row.grade?.toString().trim()) && row.amount != null && !Number.isNaN(row.amount);
+    });
+
+    if (validRows.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No valid fee rows found in image' });
+    }
+
+    let updatedCount = 0;
+    let createdCount = 0;
+
+    for (const row of validRows) {
+      const existing = await prisma.tuitionRate.findFirst({
+        where: { grade: row.grade, termName }
+      });
+
+      if (existing) {
+        await prisma.tuitionRate.update({
+          where: { id: existing.id },
+          data: { amount: (parseFloat(existing.amount.toString()) + row.amount).toString() }
+        });
+        updatedCount++;
+      } else {
+        await prisma.tuitionRate.create({
+          data: { grade: row.grade, amount: row.amount.toString(), termName }
+        });
+        createdCount++;
+      }
+    }
+
+    res.json({ status: 'ok', message: `Updated ${updatedCount} existing fees, created ${createdCount} new fees` });
+
+  } catch (err) {
+    console.error('Error processing fee image:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to process image' });
+  }
+    
+  });
+
 app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -80,7 +159,7 @@ app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) =>
           },
           {
             type: 'text',
-            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]'
+            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]. If the left column says anything like "Primary", or "P1/P2/P3", just make the category Kindergarten. Do not do this for Toddler.'
           }
         ]
       }]
@@ -293,6 +372,42 @@ app.get('/api/highest-tuition-year', async (_req, res) => {
   });
 
   res.json(chartData);
+});
+
+// Chart 3.3
+app.get('/api/tuition-increase-by-year', async (_req, res) => {
+  try {
+    const allData = await prisma.tuitionRate.findMany({
+      select: { termName: true, grade: true, amount: true },
+      orderBy: { termName: 'asc' } 
+    });
+
+    const termTotals: Record<string, number> = {};
+    allData.forEach(row => {
+      const amount = parseFloat(row.amount.toString());
+      termTotals[row.termName] = (termTotals[row.termName] || 0) + amount;
+    });
+
+    const sortedTerms = Object.keys(termTotals).sort((a, b) => {
+      const yearA = parseInt(a.split('-')[0]);
+      const yearB = parseInt(b.split('-')[0]);
+      return yearA - yearB;
+    });
+
+    const result: Record<string, number> = {};
+    sortedTerms.forEach((term, i) => {
+      const nextTerm = sortedTerms[i + 1];
+      if (!nextTerm) return;
+      const increase = parseFloat((((termTotals[nextTerm] - termTotals[term]) / termTotals[term]) * 100).toFixed(2));
+      result[term] = increase;
+    });
+
+    res.json(result);
+
+  } catch (err) {
+    console.error('Error calculating tuition increase:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to calculate tuition increases' });
+  }
 });
 
 // Chart 4.2
