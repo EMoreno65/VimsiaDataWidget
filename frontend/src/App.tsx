@@ -3,9 +3,11 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData } from './ChartContainer/ChartDataService.tsx';
+import { fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
+import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
+import MultiBarFinaidPercent from './ChartContainer/MultiBarFinaidPercent.tsx';
 
 // const API_URL = process.env.REACT_APP_API_URL;
 const API_URL = 'http://localhost:4001';
@@ -28,9 +30,12 @@ const App: React.FC = () => {
   const [enrollmentCapacityLineData, setEnrollmentCapacityLineData] = useState<any>(null);
   const [enrollmentDivisionLineData, setEnrollmentDivisionLineData] = useState<any>(null);
   const [finaidBarData, setFinaidBarData] = useState<any>(null);
+  const [finAidMultiBarData, setFinaidMultiBarData] = useState<any>(null);
   const [tuitionGradeData, setTuitionGradeData] = useState<any>(null);
   const [highestTuitionYearData, setHighestTuitionYearData] = useState<any>(null);
   const [tuitionIncreaseData, setTuitionIncreaseData] = useState<any>(null);
+  const [financialAidTerm, setFinancialAidTerm] = useState<any>(null);
+  const [finaidPercentIncrease, setFinaidPercentIncrease] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -39,7 +44,7 @@ const App: React.FC = () => {
       .catch((err) => setMessage(`Error: ${err.message}`));
   }, []);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEnrollmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploadStatus('Uploading...');
@@ -63,13 +68,14 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFileChangeTest = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFinanceUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploadStatus('Uploading...');
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('term', financialAidTerm);
 
     try {
       const res = await fetch(`${API_URL}/api/upload-finance-csv`, {
@@ -232,6 +238,35 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateFinaidMultiBarData = async () => {
+    try {
+      const result = await fetchFinaidMultiBarData();
+      if (result) {
+        console.log('Financial aid multi bar chart data:', result);
+        setFinaidMultiBarData(result);
+      } else {
+        console.error('Failed to fetch financial aid multi bar chart data');
+      }
+    } catch (err) {
+      console.error('Error fetching financial aid bar chart data:', err);
+    }
+  };
+
+  const handleGenerateFinaidIncreaseData = async () => {
+    try {
+      const result = await fetchFinaidIncreaseData();
+      if (result) {
+        console.log('Financial aid multi bar chart data:', result);
+        setFinaidPercentIncrease(result);
+      } else {
+        console.error('Failed to fetch financial aid multi bar chart data');
+      }
+    }
+    catch (err) {
+      console.error('Error fetching financial aid bar chart data:', err)
+    }
+  }
+
   const handleGenerateEnrollmentDivisionMultiBarData = async () => {
     try {
       const result = await fetchEnrollmentDivisionMultiBarData();
@@ -304,7 +339,7 @@ const App: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
         <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
-          <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
+          <input type="file" accept=".csv" onChange={handleEnrollmentUpload} style={{ display: 'none' }} />
           ↑ Choose CSV file
         </label>
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
@@ -313,9 +348,28 @@ const App: React.FC = () => {
       {/* Upload bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
         <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+          <select
+            value={financialAidTerm}
+            onChange={(event) => setFinancialAidTerm(event.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', fontSize: 13, color: '#111827' }}
+          >
+            <option value="2019-2020">2019-2020</option>
+            <option value="2020-2021">2020-2021</option>
+            <option value="2021-2022">2021-2022</option>
+            <option value="2022-2023">2022-2023</option>
+            <option value="2023-2024">2023-2024</option>
+            <option value="2024-2025">2024-2025</option>
+            <option value="2025-2026">2025-2026</option>
+            <option value="2026-2027">2026-2027</option>
+            <option value="2027-2028">2027-2028</option>
+            <option value="2028-2029">2028-2029</option>
+            <option value="2029-2030">2029-2030</option>
+            <option value="2030-2031">2030-2031</option>
+            <option value="2031-2032">2031-2032</option>
+          </select>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
-          <input type="file" accept=".csv" onChange={handleFileChangeTest} style={{ display: 'none' }} />
-          ↑ Choose CSV file THIS ONES FOR TESTING
+          <input type="file" accept=".csv" onChange={handleFinanceUpload} style={{ display: 'none' }} />
+          ↑ Please Upload Financial Aid CSV Here
         </label>
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>
@@ -365,6 +419,8 @@ const App: React.FC = () => {
           { label: 'Tuition by Grade (Year-Based)', title: 'Bar chart', desc: 'Comparison of tuition by grade for a given year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionGradeData, chart: tuitionGradeData && <BarChartComponent data={tuitionGradeData} /> },
           { label: 'Highest Tuition by Year', title: 'Bar chart', desc: 'Comparison of highest tuition by year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateHighestTuitionYear, chart: highestTuitionYearData && <BarChartComponent data={highestTuitionYearData} /> },
           { label: 'Tuition Increase by Year', title: 'Bar chart', desc: 'Comparison of tuition increases by year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionIncreaseData, chart: tuitionIncreaseData && <BarChartComponent data={tuitionIncreaseData} /> },
+          { label: 'Financial Aid by Year', title: 'Multi Bar chart', desc: 'Comparison of financial aid given by year and grade', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidMultiBarData, chart: finAidMultiBarData && <MultiBarAidByGradeYear chartData={finAidMultiBarData} /> },
+          { label: 'Financial Aid Percentage Increase by Year', title: 'Multi Bar Graph', desc: 'Percentage increase of financial aid overtime', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidIncreaseData, chart: finaidPercentIncrease && <MultiBarFinaidPercent chartData={finaidPercentIncrease} /> },
         ].map(({ label, title, desc, accent, bg, onClick, chart }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

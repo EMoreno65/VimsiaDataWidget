@@ -87,6 +87,15 @@ export async function fetchFinaidBarData(): Promise<BarChartData[]> {
     return finaidBarData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
 }
 
+export async function fetchFinaidMultiBarData(): Promise<MultiChartData> {
+    const response = await fetch(`${API_URL}/api/make-finaid-multi-bar`);
+    if (!response.ok) {
+        throw new Error(`Error fetching multi bar finance data`);
+    }
+    const finaidMultiBarData = await response.json();
+    return finaidMultiBarData;
+}
+
 export async function fetchTuitionGradeData(tuitionTerm: string): Promise<BarChartData[]> {
     const response = await fetch(`${API_URL}/api/make-tuition-grade-bar?term=${encodeURIComponent(tuitionTerm)}`);
     if (!response.ok) {
@@ -113,4 +122,13 @@ export async function fetchTuitionIncreaseData(): Promise<BarChartData[]> {
     }
     const tuitionIncreaseData = await response.json();
     return tuitionIncreaseData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
+}
+
+export async function fetchFinaidIncreaseData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/percentage-change-finance`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid increase by year data: ${response.statusText}`);
+    }
+    const finaidIncreaseData = await response.json();
+    return finaidIncreaseData;
 }

@@ -80,7 +80,7 @@ app.post('/api/upload-fee-image', upload.single('file'), async (req, res) => {
           },
           {
             type: 'text',
-            text: 'Extract all grade/level and dollar fee amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 500.00}, ...]. If the left column says anything like "Primary", "P1", "P2", or "P3", normalize the grade name to "Kindergarten". Do not do this for Toddler.'
+            text: 'Extract all grade/level and dollar fee amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 500.00}, ...]. If the left column says anything like "Primary", "P1", "P2", or "P3", normalize the grade name to "Kindergarten". Ignore Toddler.'
           }
         ]
       }]
@@ -159,7 +159,7 @@ app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) =>
           },
           {
             type: 'text',
-            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]. If the left column says anything like "Primary", or "P1/P2/P3", just make the category Kindergarten. Do not do this for Toddler.'
+            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]. If the left column says anything like "Primary", or "P1/P2/P3", just make the category Kindergarten. Ignore Toddler.'
           }
         ]
       }]
@@ -251,7 +251,7 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
       })
       data.push(obj as Prisma.TestEnrollmentCreateManyInput);
     })
-    console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
+    // console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
 
     // console.log("Data is ", data);
     const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
@@ -272,6 +272,11 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
   try {
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No file uploaded'});
+    }
+
+    const termName = (req.body.term as string | undefined)?.trim();
+    if (!termName) {
+      return res.status(400).json({ status: 'error', message: 'No term selected for tuition upload' });
     }
 
     const csvText = req.file.buffer.toString('utf8').replace(/^\uFEFF/, '');
@@ -306,10 +311,12 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
         if (fieldName) {
           obj[fieldName] = row[index];
         }
+        
       })
+      obj.termName = termName;
       data.push(obj as Prisma.FinanceDataCreateManyInput);
     })
-    console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
+    // console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
 
     // const missingTermRows = data.filter(d => !d.termName || String(d.termName).trim() === '');
     // if (missingTermRows.length > 0) {
@@ -410,6 +417,41 @@ app.get('/api/tuition-increase-by-year', async (_req, res) => {
   }
 });
 
+// Chart 4.1
+app.get('/api/make-finaid-multi-bar', async (_req, res) => {
+  const grouped = await prisma.financeData.groupBy({
+    by: ['termName', 'grade', 'financialAid', 'studentName']
+  }); // Now I have a nested list of termNames with the grade and the grade is counted.
+
+  const organized: Record<string, any> = {} // Create a record for term to grades to financial aid
+
+  grouped.forEach(item => {
+    const term = item.termName;
+    const grade = item.grade;
+    const financialAid = parseFloat(item.financialAid ?? '0');
+
+    if (!organized[term]) {
+      organized[term] = { // This just adds the slot for the term
+        name: term
+      };
+    }
+
+    if (financialAid) {
+      if (organized[term][grade]) {
+        organized[term][grade] += financialAid;
+      }
+      else {
+        organized[term][grade] = financialAid;
+      } 
+    }
+  });
+
+  const toReturn = Object.values(organized); 
+
+  res.json(toReturn);
+
+});
+
 // Chart 4.2
 app.get('/api/make-finaid-single-bar', async (_req, res) => {
   const allData = await prisma.financeData.findMany({
@@ -439,7 +481,72 @@ app.get('/api/finaid-tuition-single-bar', async (_req, res) => {
     // I need to caluculate total financial aid given by each grade and divide it by tuition
     
   })
-})
+});
+
+// Chart 4.3
+app.get('/api/percentage-change-finance', async (_req, res) => {
+  try {
+    const allData = await prisma.financeData.findMany({
+      select: { termName: true, grade: true, financialAid: true },
+      orderBy: { termName: 'asc' }
+    });
+
+    const totalsByTermGrade: Record<string, Record<string, number>> = {};
+    const termSet = new Set<string>();
+    const gradeSet = new Set<string>();
+
+    allData.forEach(item => {
+      const term = item.termName;
+      const grade = item.grade;
+      const financialAid = parseFloat(item.financialAid ?? '0') || 0;
+
+      termSet.add(term);
+      gradeSet.add(grade);
+
+      if (!totalsByTermGrade[term]) {
+        totalsByTermGrade[term] = {};
+      }
+      totalsByTermGrade[term][grade] = (totalsByTermGrade[term][grade] || 0) + financialAid;
+    });
+
+    const sortedTerms = Array.from(termSet).sort((a, b) => {
+      const yearA = parseInt(a.split('-')[0]);
+      const yearB = parseInt(b.split('-')[0]);
+      if (Number.isNaN(yearA) || Number.isNaN(yearB)) {
+        return a.localeCompare(b);
+      }
+      return yearA - yearB;
+    });
+
+    const sortedGrades = Array.from(gradeSet).sort((a, b) => a.localeCompare(b));
+
+    const result: Array<Record<string, string | number | null>> = [];
+
+    for (let i = 1; i < sortedTerms.length; i++) {
+      const currentTerm = sortedTerms[i];
+      const previousTerm = sortedTerms[i - 1];
+      const row: Record<string, string | number | null> = { name: currentTerm };
+
+      sortedGrades.forEach(grade => {
+        const currentTotal = totalsByTermGrade[currentTerm]?.[grade] ?? 0;
+        const previousTotal = totalsByTermGrade[previousTerm]?.[grade] ?? 0;
+
+        if (previousTotal === 0) {
+          row[grade] = null;
+        } else {
+          row[grade] = parseFloat((((currentTotal - previousTotal) / previousTotal) * 100).toFixed(2));
+        }
+      });
+
+      result.push(row);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error calculating financial aid percentage change:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to calculate financial aid percentage change' });
+  }
+});
 
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
@@ -448,7 +555,7 @@ app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes in
   const grouped = await prisma.testEnrollment.groupBy({
     by: ['termName', 'grade'],
     _count: {
-      grade: true,
+      grade: true, // This means the number of people in each grade is counted for each term year
     }
   });
 

@@ -32,6 +32,7 @@ model FinanceData {
   tuition                String
   financialAid           String?
   tuitionRemission       String?
+  termName               String
 }
 
 model TuitionRate {
