@@ -42,6 +42,7 @@ const App: React.FC = () => {
   const [finaidPercentRevenueDivision, setFinaidPercentRevenueDivision] = useState<any>(null);
   const [finaidPercentRevenueGrade, setFinaidPercentRevenueGrade] = useState<any>(null);
   const [fourPointSixTerm, setFourPointSixTerm] = useState<any>(null);
+  const [finaidRewardsGrade, setFinaidRewardsGrade] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -355,6 +356,17 @@ const App: React.FC = () => {
     }
   };
 
+  // const handleGenerateFinaidRewardsGrade = async () => {
+  //   try {
+  //     const result = await fetchFinaidRewardsGrade();
+  //     if (result) {
+  //       setFinaidPercentRevenueGrade(result);
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching finaid users by grade: ', err);
+  //   }
+  // }
+
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
 
@@ -484,6 +496,8 @@ const App: React.FC = () => {
               <option value="2031-2032">2031-2032</option>
             </select>
           ), chart: finaidPercentRevenueGrade && <BarChartGradeComponent data={finaidPercentRevenueGrade} /> },
+          // { label: 'Number of Financial Aid Recipients by Grade', title: 'Bar Chart', desc: 'Number of Financial Aid Receipients per Grade', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidRewardsGrade, chart: finaidRewardsGrade && <BarChartFinaidGradeComponent data={finaidRewardsGrade} /> },
+
 
 
         ].map(({ label, title, desc, accent, bg, onClick, chart, control }) => (

@@ -803,6 +803,17 @@ app.get('/api/finaid-percent-revenue-grade', async (req, res) => {
   }
 });
 
+// Chart 4.7
+app.get('/api/finaid-rewards-by-grade', async (_req, res) => {
+  const finaidGrade = await prisma.financeData.groupBy({
+    by: ['grade', 'financialAid'],
+    _count: {
+      financialAid: true,
+    }
+  });
+  console.log("Write front end functionality and break here to see what finaidGrade is");
+})
+
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
   console.log('Received request for multi bar chart data and it is: ', _req.body);
