@@ -132,3 +132,31 @@ export async function fetchFinaidIncreaseData(): Promise<BarChartData[]> {
     const finaidIncreaseData = await response.json();
     return finaidIncreaseData;
 }
+
+export async function fetchFinaidPercentRevenue(): Promise<LineGraphData> {
+    const response = await fetch(`${API_URL}/api/finaid-percent-revenue`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid percent of revenue data: ${response.statusText}`);
+    }
+    const finaidPercentRevenueData = response.json();
+    return finaidPercentRevenueData;
+}
+
+export async function fetchFinaidPercentRevenueDivision(): Promise<LineGraphData> {
+    const response = await fetch(`${API_URL}/api/finaid-percent-revenue-division`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid percent of revenue data: ${response.statusText}`);
+    }
+    const finaidPercentRevenueData = response.json();
+    return finaidPercentRevenueData;
+}
+
+export async function fetchFinaidPercentRevenueGrade(term?: string): Promise<LineGraphData> {
+    const url = term ? `${API_URL}/api/finaid-percent-revenue-grade?term=${encodeURIComponent(term)}` : `${API_URL}/api/finaid-percent-revenue-grade`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid percent of revenue data: ${response.statusText}`);
+    }
+    const finaidPercentRevenueData = response.json();
+    return finaidPercentRevenueData;
+}

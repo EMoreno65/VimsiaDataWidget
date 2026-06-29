@@ -3,11 +3,13 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData } from './ChartContainer/ChartDataService.tsx';
+import { fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
 import MultiBarFinaidPercent from './ChartContainer/MultiBarFinaidPercent.tsx';
+import FinaidPercentTuitionMultiLineComponent from './ChartContainer/FinaidPercentTuitionMultiLine.tsx';
+import BarChartGradeComponent from './ChartContainer/BarChartGrade.tsx';
 
 // const API_URL = process.env.REACT_APP_API_URL;
 const API_URL = 'http://localhost:4001';
@@ -36,6 +38,10 @@ const App: React.FC = () => {
   const [tuitionIncreaseData, setTuitionIncreaseData] = useState<any>(null);
   const [financialAidTerm, setFinancialAidTerm] = useState<any>(null);
   const [finaidPercentIncrease, setFinaidPercentIncrease] = useState<any>(null);
+  const [finaidPercentRevenue, setFinaidPercentRevenue] = useState<any>(null);
+  const [finaidPercentRevenueDivision, setFinaidPercentRevenueDivision] = useState<any>(null);
+  const [finaidPercentRevenueGrade, setFinaidPercentRevenueGrade] = useState<any>(null);
+  const [fourPointSixTerm, setFourPointSixTerm] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -315,6 +321,40 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateFinaidPercentRevenue = async () => {
+    try {
+      const result = await fetchFinaidPercentRevenue();
+      if (result) {
+        setFinaidPercentRevenue(result);
+      }
+    } catch (err) {
+      console.error('Error fetching finaid percent of revenue by year: ', err);
+    }
+  };
+
+  const handleGenerateFinaidPercentRevenueDivision = async () => {
+    try {
+      const result = await fetchFinaidPercentRevenueDivision();
+      if (result) {
+        setFinaidPercentRevenueDivision(result);
+      }
+    } catch (err) {
+      console.error('Error fetching finaid percent of revenue by year: ', err);
+    }
+  };
+
+  const handleGenerateFinaidPercentRevenueGrade = async () => {
+    try {
+      console.log("The term on the drop down is ", fourPointSixTerm);
+      const result = await fetchFinaidPercentRevenueGrade(fourPointSixTerm);
+      if (result) {
+        setFinaidPercentRevenueGrade(result);
+      }
+    } catch (err) {
+      console.error('Error fetching finaid percent of revenue by year for grade: ', err);
+    }
+  };
+
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
 
@@ -421,7 +461,32 @@ const App: React.FC = () => {
           { label: 'Tuition Increase by Year', title: 'Bar chart', desc: 'Comparison of tuition increases by year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionIncreaseData, chart: tuitionIncreaseData && <BarChartComponent data={tuitionIncreaseData} /> },
           { label: 'Financial Aid by Year', title: 'Multi Bar chart', desc: 'Comparison of financial aid given by year and grade', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidMultiBarData, chart: finAidMultiBarData && <MultiBarAidByGradeYear chartData={finAidMultiBarData} /> },
           { label: 'Financial Aid Percentage Increase by Year', title: 'Multi Bar Graph', desc: 'Percentage increase of financial aid overtime', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidIncreaseData, chart: finaidPercentIncrease && <MultiBarFinaidPercent chartData={finaidPercentIncrease} /> },
-        ].map(({ label, title, desc, accent, bg, onClick, chart }) => (
+          { label: 'Finanaical Aid Percent of Total Revenue by Year', title: 'Line Graph', desc: 'Finaid Percent of Revenue', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidPercentRevenue, chart: finaidPercentRevenue && <LineGraphComponent data={finaidPercentRevenue} /> },
+          { label: 'Finanaical Aid Percent of Total Revenue by Year per Division', title: 'Line Graph', desc: 'Finaid Percent of Revenue per Division', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidPercentRevenueDivision, chart: finaidPercentRevenueDivision && <FinaidPercentTuitionMultiLineComponent data={finaidPercentRevenueDivision} /> },
+          { label: 'Finanaical Aid Percent of Total Revenue by Year per Grade', title: 'Bar Chart', desc: 'Finaid Percent of Revenue per Grade', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidPercentRevenueGrade, control: (
+            <select
+              value={fourPointSixTerm || '2024-2025'}
+              onChange={(e) => setFourPointSixTerm(e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', fontSize: 13, color: '#111827', marginBottom: 8 }}
+            >
+              <option value="2019-2020">2019-2020</option>
+              <option value="2020-2021">2020-2021</option>
+              <option value="2021-2022">2021-2022</option>
+              <option value="2022-2023">2022-2023</option>
+              <option value="2023-2024">2023-2024</option>
+              <option value="2024-2025">2024-2025</option>
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+              <option value="2027-2028">2027-2028</option>
+              <option value="2028-2029">2028-2029</option>
+              <option value="2029-2030">2029-2030</option>
+              <option value="2030-2031">2030-2031</option>
+              <option value="2031-2032">2031-2032</option>
+            </select>
+          ), chart: finaidPercentRevenueGrade && <BarChartGradeComponent data={finaidPercentRevenueGrade} /> },
+
+
+        ].map(({ label, title, desc, accent, bg, onClick, chart, control }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
@@ -431,6 +496,7 @@ const App: React.FC = () => {
               <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, flexShrink: 0 }}>◈</div>
             </div>
             <div style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>{desc}</div>
+            {control}
             <button type="button" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto', fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}>
               ▶ Generate
             </button>

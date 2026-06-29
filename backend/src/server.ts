@@ -80,7 +80,7 @@ app.post('/api/upload-fee-image', upload.single('file'), async (req, res) => {
           },
           {
             type: 'text',
-            text: 'Extract all grade/level and dollar fee amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 500.00}, ...]. If the left column says anything like "Primary", "P1", "P2", or "P3", normalize the grade name to "Kindergarten". Ignore Toddler.'
+            text: 'Extract all grade/level and dollar fee amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 500.00}, ...]. If the left column says anything like "Primary", normalize the grade name to "Kindergarten". If it says "Toddler", or "P1" or "P2" or "P3", make the grade name PK.'
           }
         ]
       }]
@@ -159,7 +159,7 @@ app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) =>
           },
           {
             type: 'text',
-            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]. If the left column says anything like "Primary", or "P1/P2/P3", just make the category Kindergarten. Ignore Toddler.'
+            text: 'Extract all grade/level and dollar amount pairs from this table. Return ONLY a JSON array, no markdown, no explanation. Format: [{"grade": "Toddler", "amount": 10200.00}, ...]. If the left column says anything like "Primary", just make the category Kindergarten. If it says "Toddler", or "P1" or "P2" or "P3", make the category PK.'
           }
         ]
       }]
@@ -469,20 +469,6 @@ app.get('/api/make-finaid-single-bar', async (_req, res) => {
   res.json(chartData);
 });
 
-// Chart 4.6 
-app.get('/api/finaid-tuition-single-bar', async (_req, res) => {
-  const allData = await prisma.financeData.findMany({
-    select: { grade: true, financialAid: true, tuition: true }
-  });
-
-  const chartData: Record<string, number> = {};
-
-  allData.forEach(item => {
-    // I need to caluculate total financial aid given by each grade and divide it by tuition
-    
-  })
-});
-
 // Chart 4.3
 app.get('/api/percentage-change-finance', async (_req, res) => {
   try {
@@ -545,6 +531,275 @@ app.get('/api/percentage-change-finance', async (_req, res) => {
   } catch (err) {
     console.error('Error calculating financial aid percentage change:', err);
     res.status(500).json({ status: 'error', message: 'Failed to calculate financial aid percentage change' });
+  }
+});
+
+// Chart 4.4
+app.get('/api/finaid-percent-revenue', async (_req, res) => {
+  const enrollmentByGrade = await prisma.testEnrollment.groupBy({
+    by: ['grade', 'termName'],
+    _count: {
+      grade: true
+    }
+  });
+  const tuitionNumbers = await prisma.tuitionRate.groupBy({
+    by: ['termName', 'grade', 'amount'],
+  });
+
+  const finaidNums = await prisma.financeData.groupBy({
+    by: ['termName', 'financialAid']
+  });
+
+  console.log("Get to here and see what pops up under each variable");
+
+  const studentsToTuition: Record<string, Record<string, Record<number, number>>> = {}; // Year -> Grade -> Enrollment -> Tuition
+
+  enrollmentByGrade.forEach(item => {
+    const uneditedTerm = item.termName;
+    const editedTerm = uneditedTerm.replace(' School Year', '');
+    let grade = item.grade;
+    if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) {
+      grade = 'PK';
+    }
+    if (['Primary'].includes(grade)) {
+      grade = 'Kindergarten';
+    }
+    const studentsPresent = item._count.grade;
+    const tuitionRecord = tuitionNumbers.find(
+      t => t.termName === editedTerm && t.grade === grade
+    );
+
+    if (!studentsToTuition[editedTerm]) {
+      studentsToTuition[editedTerm] = {};
+    }
+    if (!studentsToTuition[editedTerm][grade]) {
+      studentsToTuition[editedTerm][grade] = {};
+    }
+
+    studentsToTuition[editedTerm][grade][studentsPresent] = tuitionRecord ? parseFloat(tuitionRecord.amount.toString()) : 0;
+  });
+
+  const sortedTerms = Object.keys(studentsToTuition).sort((a, b) => {
+    const yearA = parseInt(a.split('-')[0], 10);
+    const yearB = parseInt(b.split('-')[0], 10);
+    return Number.isNaN(yearA) || Number.isNaN(yearB) ? a.localeCompare(b) : yearA - yearB;
+  }).slice(1);
+
+  // How do I remove the first entry of sortedTerms here
+
+  const tuitionTotalsData = sortedTerms.map(term => {
+    const gradeMap = studentsToTuition[term] || {};
+    let termTotal = 0;
+
+    Object.values(gradeMap).forEach(enrollmentMap => {
+      Object.entries(enrollmentMap).forEach(([studentCount, tuitionAmount]) => {
+        termTotal += Number(studentCount) * Number(tuitionAmount);
+      });
+    });
+
+    return {
+      name: term,
+      value: termTotal,
+    };
+  });
+
+  const financialAidRows = await prisma.financeData.findMany({
+    select: { termName: true, financialAid: true }
+  });
+
+  const financialAidTotals: Record<string, number> = {};
+  financialAidRows.forEach(item => {
+    const term = item.termName.replace(' School Year', '');
+    const aid = parseFloat(item.financialAid ?? '0') || 0;
+    financialAidTotals[term] = (financialAidTotals[term] || 0) + aid;
+  })
+
+  const lineChartData = sortedTerms.map(term => {
+    const normalizedTerm = term.replace(' School Year', '');
+    const tuitionTotal = tuitionTotalsData.find(entry => entry.name === normalizedTerm)?.value || 0;
+    const financialAidTotal = financialAidTotals[normalizedTerm] || 0;
+    const value = tuitionTotal > 0 ? parseFloat(((financialAidTotal / tuitionTotal) * 100).toFixed(2)) : 0;
+
+    return {
+      name: normalizedTerm,
+      value,
+    };
+  });
+
+  res.json(lineChartData);
+});
+
+// Chart 4.5
+app.get('/api/finaid-percent-revenue-division', async (_req, res) => {
+const enrollmentByGrade = await prisma.testEnrollment.groupBy({
+    by: ['grade', 'termName'],
+    _count: {
+      grade: true
+    }
+  });
+  const tuitionNumbers = await prisma.tuitionRate.groupBy({
+    by: ['termName', 'grade', 'amount'],
+  });
+
+  const finaidNums = await prisma.financeData.groupBy({
+    by: ['termName', 'financialAid']
+  });
+
+  console.log("Get to here and see what pops up under each variable");
+
+  const studentsToTuition: Record<string, Record<string, Record<number, number>>> = {}; // Year -> Grade -> Enrollment -> Tuition
+
+  enrollmentByGrade.forEach(item => {
+    const uneditedTerm = item.termName;
+    const editedTerm = uneditedTerm.replace(' School Year', '');
+    let grade = item.grade;
+    if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) {
+      grade = 'PK';
+    }
+    if (['Primary'].includes(grade)) {
+      grade = 'Kindergarten';
+    }
+    const studentsPresent = item._count.grade;
+    const tuitionRecord = tuitionNumbers.find(
+      t => t.termName === editedTerm && t.grade === grade
+    );
+
+    if (!studentsToTuition[editedTerm]) {
+      studentsToTuition[editedTerm] = {};
+    }
+    if (!studentsToTuition[editedTerm][grade]) {
+      studentsToTuition[editedTerm][grade] = {};
+    }
+
+    studentsToTuition[editedTerm][grade][studentsPresent] = tuitionRecord ? parseFloat(tuitionRecord.amount.toString()) : 0;
+  });
+
+  const sortedTerms = Object.keys(studentsToTuition).sort((a, b) => {
+    const yearA = parseInt(a.split('-')[0], 10);
+    const yearB = parseInt(b.split('-')[0], 10);
+    return Number.isNaN(yearA) || Number.isNaN(yearB) ? a.localeCompare(b) : yearA - yearB;
+  }).slice(1);
+
+  // How do I remove the first entry of sortedTerms here
+
+  const tuitionTotalsData = sortedTerms.map(term => {
+    const gradeMap = studentsToTuition[term] || {};
+    let termTotal = 0;
+
+    Object.values(gradeMap).forEach(enrollmentMap => {
+      Object.entries(enrollmentMap).forEach(([studentCount, tuitionAmount]) => {
+        termTotal += Number(studentCount) * Number(tuitionAmount);
+      });
+    });
+
+    return {
+      name: term,
+      value: termTotal,
+    };
+  });
+
+  const financialAidRows = await prisma.financeData.findMany({
+    select: { termName: true, financialAid: true, grade: true }
+  });
+
+  const financialAidTotals: Record<string, Record<string, number>> = {};
+  financialAidRows.forEach(item => {
+    let division = 'Undefined';
+    if (['Toddler', 'P1', 'P2', 'P3', 'La Casa', 'Primary', '1st', '2nd', '3rd', '4th', '5th'].includes(item.grade)) {
+      division = 'Lower';
+    }
+    if (['6th', '7th', '8th'].includes(item.grade)) {
+      division = 'Middle';
+    }
+    if (['9th', '10th', '11th', '12th'].includes(item.grade)) {
+      division = 'Upper';
+    }
+    const term = item.termName.replace(' School Year', '');
+    const aid = parseFloat(item.financialAid ?? '0') || 0;
+    if (!financialAidTotals[term]) {
+      financialAidTotals[term] = {};
+    }
+    financialAidTotals[term][division] = (financialAidTotals[term][division] || 0) + aid;
+  });
+
+  const lineChartData = sortedTerms.map(term => {
+    const tuitionTotal = tuitionTotalsData.find(entry => entry.name === term)?.value || 0;
+    const divisions = ['Lower', 'Middle', 'Upper'];
+
+    const entry: Record<string, string | number> = { name: term };
+    divisions.forEach(division => {
+      const financialAidTotal = financialAidTotals[term]?.[division] || 0;
+      const value = tuitionTotal > 0 ? parseFloat(((financialAidTotal / tuitionTotal) * 100).toFixed(2)) : 0;
+      entry[division] = value;
+    });
+    return entry;
+
+});
+  res.json(lineChartData); 
+});
+
+// Chart 4.6
+app.get('/api/finaid-percent-revenue-grade', async (req, res) => {
+  try {
+    const term = (req.query.term as string) || '';
+    if (!term) {
+      return res.status(400).json({ message: 'term query param required, e.g. ?term=2024-2025' });
+    }
+
+    // Accept both stored variants: '2024-2025' or '2024-2025 School Year'
+    const termVariants = [term, `${term} School Year`];
+
+    // Enrollment counts by grade for the term
+    const enrollmentGroups = await prisma.testEnrollment.groupBy({
+      by: ['grade'],
+      where: { termName: { in: termVariants } },
+      _count: { grade: true }
+    });
+    const counts: Record<string, number> = {};
+    enrollmentGroups.forEach(g => {
+      let grade = g.grade;
+      if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) grade = 'PK';
+      if (grade === 'Primary') grade = 'Kindergarten';
+      counts[grade] = (counts[grade] || 0) + g._count.grade;
+    });
+
+    // Tuition amount per grade for the term
+    const tuitionRows = await prisma.tuitionRate.findMany({ where: { termName: { in: termVariants } }, select: { grade: true, amount: true } });
+    const tuitionMap: Record<string, number> = {};
+    tuitionRows.forEach(t => {
+      let grade = t.grade;
+      if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) grade = 'PK';
+      if (grade === 'Primary') grade = 'Kindergarten';
+      tuitionMap[grade] = Number(t.amount ?? 0);
+    });
+
+    // Financial aid sums by grade for the term
+    const aidRows = await prisma.financeData.findMany({ where: { termName: { in: termVariants } }, select: { grade: true, financialAid: true } });
+    const aidMap: Record<string, number> = {};
+    aidRows.forEach(a => {
+      let grade = a.grade;
+      if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) grade = 'PK';
+      if (grade === 'Primary') grade = 'Kindergarten';
+      const aid = parseFloat(a.financialAid ?? '0') || 0;
+      aidMap[grade] = (aidMap[grade] || 0) + aid;
+    });
+
+    // Build result: grade -> percent of tuition revenue covered by aid
+    const grades = new Set<string>([...Object.keys(counts), ...Object.keys(tuitionMap), ...Object.keys(aidMap)]);
+    const result: Record<string, number> = {};
+    grades.forEach(g => {
+      const studentCount = counts[g] || 0;
+      const perStudentTuition = tuitionMap[g] || 0;
+      const tuitionRevenue = studentCount * perStudentTuition;
+      const aidTotal = aidMap[g] || 0;
+      const percent = tuitionRevenue > 0 ? parseFloat(((aidTotal / tuitionRevenue) * 100).toFixed(2)) : 0;
+      result[g] = percent;
+    });
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Error /api/finaid-percent-revenue-grade', err);
+    return res.status(500).json({ message: 'internal error' });
   }
 });
 
