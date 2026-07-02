@@ -180,3 +180,13 @@ export async function fetchFinaidRewardsGrade(term?: string): Promise<BarChartDa
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 };
+
+export async function fetchFinaidRewardsSize(term?: string): Promise<PieChartData> {
+    const url = term ? `${API_URL}/api/finaid-rewards-by-percent?term=${encodeURIComponent(term)}` : `${API_URL}/api/finaid-rewards-by-percent`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid rewards by size: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}

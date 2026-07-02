@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade } from './ChartContainer/ChartDataService.tsx';
+import { fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -11,6 +11,8 @@ import MultiBarFinaidPercent from './ChartContainer/MultiBarFinaidPercent.tsx';
 import FinaidPercentTuitionMultiLineComponent from './ChartContainer/FinaidPercentTuitionMultiLine.tsx';
 import BarChartGradeComponent from './ChartContainer/BarChartGrade.tsx';
 import BarChartFinaidGradeComponent from './ChartContainer/BarChartFinaidGrade.tsx';
+import PieChartFinaidComponent from './ChartContainer/PieChartFinaid.tsx';
+
 
 // const API_URL = process.env.REACT_APP_API_URL;
 const API_URL = 'http://localhost:4001';
@@ -44,7 +46,9 @@ const App: React.FC = () => {
   const [finaidPercentRevenueGrade, setFinaidPercentRevenueGrade] = useState<any>(null);
   const [fourPointSixTerm, setFourPointSixTerm] = useState<any>(null);
   const [fourPointSevenTerm, setFourPointSevenTerm] = useState<any>(null);
+  const [fourPointEightTerm, setFourPointEightTerm] = useState<any>(null);
   const [finaidRewardsGrade, setFinaidRewardsGrade] = useState<any>(null);
+  const [finaidRewardsSize, setFinaidRewardsSize] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -370,6 +374,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateFinaidRewardsSize = async () => {
+    try {
+      console.log("The term on the drop down is ", fourPointEightTerm);
+      const result = await fetchFinaidRewardsSize(fourPointEightTerm);
+      if (result) {
+        setFinaidRewardsSize(result);
+      }
+    } catch (err) {
+      console.error('Error fetching finaid rewards by size: ', err);
+    }
+  }
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -531,6 +547,27 @@ const App: React.FC = () => {
               <option value="2031-2032">2031-2032</option>
             </select>
           ), chart: finaidRewardsGrade && <BarChartFinaidGradeComponent data={finaidRewardsGrade} /> },
+          { label: 'Size of Financial Aid Rewards', title: 'Pie Chart', desc: 'Size of Financial Aid Rewards relative to tuition', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidRewardsSize, control: (
+            <select
+              value={fourPointEightTerm || '2024-2025'}
+              onChange={(e) => setFourPointEightTerm(e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', fontSize: 13, color: '#111827', marginBottom: 8 }}
+            >
+              <option value="2019-2020">2019-2020</option>
+              <option value="2020-2021">2020-2021</option>
+              <option value="2021-2022">2021-2022</option>
+              <option value="2022-2023">2022-2023</option>
+              <option value="2023-2024">2023-2024</option>
+              <option value="2024-2025">2024-2025</option>
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+              <option value="2027-2028">2027-2028</option>
+              <option value="2028-2029">2028-2029</option>
+              <option value="2029-2030">2029-2030</option>
+              <option value="2030-2031">2030-2031</option>
+              <option value="2031-2032">2031-2032</option>
+            </select>
+          ), chart: finaidRewardsSize && <PieChartFinaidComponent data={finaidRewardsSize} /> },
 
 
 

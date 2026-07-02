@@ -846,6 +846,77 @@ app.get('/api/finaid-rewards-by-grade', async (req, res) => {
   res.json(chartData);
 });
 
+// Chart 4.8
+app.get('/api/finaid-rewards-by-percent', async (req, res) => {
+  const term = (req.query.term as string) || '';
+  if (!term) {
+    return res.status(400).json({ message: 'term query param required, e.g. ?term=2024-2025' });
+  }
+
+  const finaidRows = await prisma.financeData.findMany({
+    where: {
+      termName: term,
+      financialAid: {
+        not: null
+      }
+    },
+    select: {
+      grade: true,
+      studentName: true,
+      financialAid: true
+    }
+  });
+
+  const tuitionData = await prisma.tuitionRate.findMany({
+    where: { termName: term },
+    select: { grade: true, amount: true }
+  });
+
+  const pieChartData: Record<string, number> = {};
+  const countedStudents = new Set<string>();
+
+  finaidRows.forEach(item => {
+    const grade = item.grade;
+    const financialAid = (item.financialAid ?? '').trim();
+    if (!financialAid) {
+      return;
+    }
+
+    const tuitionRecord = tuitionData.find(
+      t => t.grade === grade
+    );
+
+    if (!tuitionRecord?.amount) {
+      return;
+    }
+    const percentage = parseFloat(financialAid) / parseFloat(tuitionRecord?.amount.toString()); 
+    let percentString = '';
+    if (percentage < 0.25) {
+      percentString = '<25%';
+    }
+    if (percentage >= 0.25 && percentage <= 0.49) {
+      percentString = '25%-49%';
+    }
+    if (percentage >= 0.50 && percentage <= 0.74) {
+      percentString = '50%-74%';
+    }
+    if (percentage >= 0.75) {
+      percentString = '>75%';
+    }
+
+    const studentKey = `${grade}::${item.studentName}`;
+    if (countedStudents.has(studentKey)) {
+      return;
+    }
+
+    countedStudents.add(studentKey);
+    pieChartData[percentString] = (pieChartData[percentString] || 0) + 1;
+  });
+
+  res.json(pieChartData);
+
+});
+
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
   console.log('Received request for multi bar chart data and it is: ', _req.body);
