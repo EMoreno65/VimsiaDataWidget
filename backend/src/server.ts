@@ -917,6 +917,45 @@ app.get('/api/finaid-rewards-by-percent', async (req, res) => {
 
 });
 
+// Chart 4.9
+app.get('/api/tuition-remission-by-term', async (req, res) => {
+  const remissionRows = await prisma.financeData.findMany({
+    where: {
+      tuitionRemission: {
+        not: null
+      }
+    },
+    select: {
+      termName: true,
+      tuitionRemission: true,
+    },
+  });
+
+  const totals: Record<string, number> = {};
+
+  remissionRows.forEach(item => {
+    const rawValue = (item.tuitionRemission ?? '').trim();
+    if (!rawValue) {
+      return;
+    }
+
+    const numericValue = Number.parseFloat(rawValue.replace(/[^0-9.-]/g, ''));
+    if (!Number.isFinite(numericValue)) {
+      return;
+    }
+
+    totals[item.termName] = (totals[item.termName] || 0) + numericValue;
+  });
+
+  // const result = Object.entries(totals).map(([termName, totalTuitionRemission]) => ({
+  //   termName,
+  //   totalTuitionRemission: Number(totalTuitionRemission.toFixed(2)),
+  // }));
+
+  res.json(totals);
+});
+
+
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet
   console.log('Received request for multi bar chart data and it is: ', _req.body);

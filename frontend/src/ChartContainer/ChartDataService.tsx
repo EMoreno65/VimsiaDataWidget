@@ -190,3 +190,12 @@ export async function fetchFinaidRewardsSize(term?: string): Promise<PieChartDat
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchTuitionRemissionTerm(term?: string): Promise<PieChartData> {
+    const response = await fetch(`${API_URL}/api/tuition-remission-by-term`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid rewards by size: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}
