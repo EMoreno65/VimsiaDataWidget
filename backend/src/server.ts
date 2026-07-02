@@ -804,15 +804,47 @@ app.get('/api/finaid-percent-revenue-grade', async (req, res) => {
 });
 
 // Chart 4.7
-app.get('/api/finaid-rewards-by-grade', async (_req, res) => {
-  const finaidGrade = await prisma.financeData.groupBy({
-    by: ['grade', 'financialAid'],
-    _count: {
-      financialAid: true,
+app.get('/api/finaid-rewards-by-grade', async (req, res) => {
+  const term = (req.query.term as string) || '';
+  if (!term) {
+    return res.status(400).json({ message: 'term query param required, e.g. ?term=2024-2025' });
+  }
+
+  const finaidRows = await prisma.financeData.findMany({
+    where: {
+      termName: term,
+      financialAid: {
+        not: null
+      }
+    },
+    select: {
+      grade: true,
+      studentName: true,
+      financialAid: true
     }
   });
-  console.log("Write front end functionality and break here to see what finaidGrade is");
-})
+
+  const chartData: Record<string, number> = {};
+  const countedStudents = new Set<string>();
+
+  finaidRows.forEach(item => {
+    const grade = item.grade;
+    const financialAid = (item.financialAid ?? '').trim();
+    if (!financialAid) {
+      return;
+    }
+
+    const studentKey = `${grade}::${item.studentName}`;
+    if (countedStudents.has(studentKey)) {
+      return;
+    }
+
+    countedStudents.add(studentKey);
+    chartData[grade] = (chartData[grade] || 0) + 1;
+  });
+
+  res.json(chartData);
+});
 
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet

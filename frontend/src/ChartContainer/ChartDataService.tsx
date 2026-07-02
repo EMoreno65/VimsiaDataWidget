@@ -170,3 +170,13 @@ export async function setFinaidRewardsGrade(): Promise<BarChartData> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchFinaidRewardsGrade(term?: string): Promise<BarChartData> {
+    const url = term ? `${API_URL}/api/finaid-rewards-by-grade?term=${encodeURIComponent(term)}` : `${API_URL}/api/finaid-rewards-by-grade`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid rewards by grade: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+};
