@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade } from './ChartContainer/ChartDataService.tsx';
+import { fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -13,6 +13,7 @@ import BarChartGradeComponent from './ChartContainer/BarChartGrade.tsx';
 import BarChartFinaidGradeComponent from './ChartContainer/BarChartFinaidGrade.tsx';
 import PieChartFinaidComponent from './ChartContainer/PieChartFinaid.tsx';
 import BarChartRemissionComponent from './ChartContainer/BarChartRemission.tsx';
+import RemissionGrossTuitionComponent from './ChartContainer/RemissionGrossTuition.tsx';
 
 
 // const API_URL = process.env.REACT_APP_API_URL;
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const [finaidRewardsGrade, setFinaidRewardsGrade] = useState<any>(null);
   const [finaidRewardsSize, setFinaidRewardsSize] = useState<any>(null);
   const [remissionData, setRemissionData] = useState<any>(null);
+  const [remissionGrossTuitionData, setRemissionGrossTuitionData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -399,6 +401,17 @@ const App: React.FC = () => {
     }
   }
 
+  const handleGenerateRemissionGrossTuition = async () => {
+    try {
+      const result = await fetchRemissionToTuition();
+      if (result) {
+        setRemissionGrossTuitionData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching tuition remission data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -582,6 +595,7 @@ const App: React.FC = () => {
             </select>
           ), chart: finaidRewardsSize && <PieChartFinaidComponent data={finaidRewardsSize} /> },
           { label: 'Remission Bar Chart', title: 'Bar Chart', desc: 'Total Remission by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionBar, chart: remissionData && <BarChartRemissionComponent data={remissionData} /> },
+          { label: 'Remission to Tuition Line Graph', title: 'Line Graph', desc: 'Total Remission relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionGrossTuition, chart: remissionGrossTuitionData && <RemissionGrossTuitionComponent data={remissionGrossTuitionData} /> },
 
 
 

@@ -199,3 +199,12 @@ export async function fetchTuitionRemissionTerm(term?: string): Promise<PieChart
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchRemissionToTuition(): Promise<LineGraphData> {
+    const response = await fetch(`${API_URL}/api/tuition-remission-percent-gross`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid rewards by size: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}
