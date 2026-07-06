@@ -217,3 +217,12 @@ export async function fetchAidRemissionPercent(): Promise<LineGraphData> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchApplicationData(): Promise<BarChartData> {
+    const response = await fetch(`${API_URL}/api/completed-applications-by-year`);
+    if (!response.ok) {
+        throw new Error(`Error fetching applications: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}

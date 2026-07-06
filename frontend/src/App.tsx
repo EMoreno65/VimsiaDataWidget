@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition } from './ChartContainer/ChartDataService.tsx';
+import { fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -15,6 +15,7 @@ import PieChartFinaidComponent from './ChartContainer/PieChartFinaid.tsx';
 import BarChartRemissionComponent from './ChartContainer/BarChartRemission.tsx';
 import RemissionGrossTuitionComponent from './ChartContainer/RemissionGrossTuition.tsx';
 import AllAidTuitionComponent from './ChartContainer/AllAidTuition.tsx';
+import BarChartApplicationComponent from './ChartContainer/BarChartApplication.tsx';
 
 
 // const API_URL = process.env.REACT_APP_API_URL;
@@ -55,6 +56,7 @@ const App: React.FC = () => {
   const [remissionData, setRemissionData] = useState<any>(null);
   const [remissionGrossTuitionData, setRemissionGrossTuitionData] = useState<any>(null);
   const [allAidTuitionData, setAllAidTuitionData] = useState<any>(null);
+  const [applicationData, setApplicationData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -159,6 +161,30 @@ const App: React.FC = () => {
 
       try {
         const res = await fetch(`${API_URL}/api/upload-tuition-image`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (res.ok) {
+          setUploadStatus('Upload successful!');
+        } else {
+          setUploadStatus(`Upload failed: ${result.message}`);
+        }
+      } catch (err) {
+        setUploadStatus('Upload failed: could not reach server');
+      }
+  };   
+
+  const handleAdmissionScreenshot = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setUploadStatus('Uploading...');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch(`${API_URL}/api/upload-admission-image`, {
           method: 'POST',
           body: formData
         });
@@ -425,6 +451,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateApplicationChart = async () => {
+    try {
+      const result = await fetchApplicationData();
+      if (result) {
+        setApplicationData(result);
+      }
+    }
+    catch (err) {
+      console.error('Error fetching application data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -497,6 +535,15 @@ const App: React.FC = () => {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
         <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
+          <input type="file" accept=".png" onChange={handleAdmissionScreenshot} style={{ display: 'none' }} />
+          ↑ Upload Admission Screenshot here
+        </label>
+        {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
         <select
           value={tuitionTerm}
           onChange={(event) => setTuitionTerm(event.target.value)}
@@ -530,6 +577,7 @@ const App: React.FC = () => {
       {/* Chart cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 12, padding: '1.25rem 1.5rem' }}>
         {[
+          { label: 'Application Bar Chart', title: 'Bar Chart', desc: 'Completed Applications by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateApplicationChart, chart: applicationData && <BarChartApplicationComponent data={applicationData} /> },
           { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
           { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
           { label: 'Enrollment · Division', title: 'Line graph', desc: 'Enrollment trends per division over time.', accent: '#854F0B', bg: '#FAEEDA', onClick: handleGenerateEnrollmentDivisionLineData, chart: enrollmentDivisionLineData && <MultiLineGraphComponent data={enrollmentDivisionLineData} /> },

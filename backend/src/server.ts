@@ -1474,6 +1474,22 @@ app.get('/api/make-multibar-enrollment-division', async (_req, res) => {
   res.json({ chartData, terms }); // Send the chart data and the list of terms back to the client as a JSON response, which will be used to render the multi-bar chart on the frontend
 });
 
+app.get('/api/completed-applications-by-year', async (_req, res) => {
+  const completedApplications = await prisma.admissionData.groupBy({
+    by: ['termName', 'applications'],
+    _count: {
+      applications: true
+    }
+  });
+  const barChartData: Record<string, number> = {};
+  for (const index in completedApplications) {
+    let termName = completedApplications[index].termName;
+    let applications = completedApplications[index].applications;
+    barChartData[termName] = applications;
+  }
+  res.json(barChartData);
+});
+
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });
 });
