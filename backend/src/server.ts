@@ -96,8 +96,36 @@ app.post('/api/upload-admission-image', upload.single('file'), async (req, res) 
       throw new Error('Failed');
     }
 
-    const rows: { grade: string; amount: number | null }[] = JSON.parse(raw);
-    
+    const rows: { termName: string; applications: number; acceptances: number; newStudents: number }[] = JSON.parse(raw);
+    const validRows = rows.filter((row): row is { termName: string; applications: number; acceptances: number; newStudents: number } => {
+      return Boolean(row.termName?.toString().trim()) && row.applications != null && !Number.isNaN(row.applications) &&
+             row.acceptances != null && !Number.isNaN(row.acceptances) && row.newStudents != null && !Number.isNaN(row.newStudents);
+    });
+
+    if (validRows.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No valid admission rows found in image' });
+    }
+
+    const data: Prisma.AdmissionDataCreateManyInput[] = validRows.map(row => ({
+      termName: row.termName,
+      applications: row.applications,
+      acceptances: row.acceptances,
+      newStudents: row.newStudents,
+    }));
+
+    const result = await prisma.admissionData.createMany({
+      data,
+      skipDuplicates: true,
+    });
+
+    if (result.count > 0) {
+      res.json({ status: 'ok', message: `Inserted ${result.count} admission records` });
+    } else {
+      res.json({ status: 'ok', message: 'No new records inserted (possible duplicates)' });
+    }
+  } catch (error) {
+    console.error('Error processing admission image:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to process admission image' });
   }
 });
 
