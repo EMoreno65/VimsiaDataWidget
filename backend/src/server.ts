@@ -1069,6 +1069,136 @@ app.get('/api/tuition-remission-percent-gross', async (_req, res) => {
   res.json(lineData);
 });
 
+// Chart 4.11
+app.get('/api/all-aid-percent-gross', async (_req, res) => {
+  const normalizeNumber = (value: string | null | undefined) => {
+    const rawValue = (value ?? '').trim();
+    if (!rawValue) {
+      return 0;
+    }
+
+    const numericValue = Number.parseFloat(rawValue.replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  };
+
+  const normalizeGrade = (grade: string) => {
+    if (['Toddler', 'P1', 'P2', 'P3', 'La Casa'].includes(grade)) {
+      return 'PK';
+    }
+    if (grade === 'Primary') {
+      return 'Kindergarten';
+    }
+    return grade;
+  };
+
+  const normalizeTerm = (term: string | null | undefined) => {
+    if (!term) {
+      return '';
+    }
+
+    return term.includes(' School Year') ? term : `${term} School Year`;
+  };
+
+  const financeTerms = await prisma.financeData.findMany({
+    select: { termName: true },
+    distinct: ['termName']
+  });
+  const tuitionTerms = await prisma.tuitionRate.findMany({
+    select: { termName: true },
+    distinct: ['termName']
+  });
+  const enrollmentTerms = await prisma.testEnrollment.findMany({
+    select: { termName: true },
+    distinct: ['termName']
+  });
+
+  const termNames = Array.from(new Set([
+    ...financeTerms.map(item => item.termName),
+    ...tuitionTerms.map(item => item.termName),
+    ...enrollmentTerms.map(item => item.termName)
+  ]));
+
+  const lineData: Array<{ name: string; value: number }> = [];
+
+  for (const termName of termNames) {
+    const normalizedTermName = normalizeTerm(termName);
+    const termVariants = [termName, normalizedTermName].filter(Boolean);
+
+    const aidRows = await prisma.financeData.findMany({
+      where: {
+        termName: { in: termVariants },
+        financialAid: {
+          not: null
+        }
+      },
+      select: {
+        financialAid: true
+      }
+    });
+
+    const remissionRows = await prisma.financeData.findMany({
+      where: {
+        termName: { in: termVariants },
+        tuitionRemission: {
+          not: null
+        }
+      },
+      select: {
+        tuitionRemission: true
+      }
+    });
+
+    const aidTotal = aidRows.reduce((sum, item) => {
+      return sum + normalizeNumber(item.financialAid);
+    }, 0);
+
+    const remissionTotal = remissionRows.reduce((sum, item) => {
+      return sum + normalizeNumber(item.tuitionRemission);
+    }, 0);
+
+    const enrollmentGroups = await prisma.testEnrollment.groupBy({
+      by: ['grade', 'termName'],
+      where: { termName: { in: termVariants } },
+      _count: { grade: true }
+    });
+
+    const counts: Record<string, number> = {};
+    enrollmentGroups.forEach(group => {
+      const normalizedGrade = normalizeGrade(group.grade);
+      counts[normalizedGrade] = (counts[normalizedGrade] || 0) + group._count.grade;
+    });
+
+    const tuitionRows = await prisma.tuitionRate.findMany({
+      where: { termName: { in: termVariants } },
+      select: { grade: true, amount: true }
+    });
+
+    const tuitionMap: Record<string, number> = {};
+    tuitionRows.forEach(row => {
+      const normalizedGrade = normalizeGrade(row.grade);
+      tuitionMap[normalizedGrade] = Number(row.amount ?? 0);
+    });
+
+    let grossTuition = 0;
+    Object.entries(counts).forEach(([grade, studentCount]) => {
+      const perStudentTuition = tuitionMap[grade] || 0;
+      grossTuition += studentCount * perStudentTuition;
+    });
+
+    const combinedSupport = aidTotal + remissionTotal;
+    const percent = grossTuition > 0 ? Number(((combinedSupport / grossTuition) * 100).toFixed(2)) : 0;
+
+    if (combinedSupport > 0 || grossTuition > 0) {
+      lineData.push({
+        name: termName,
+        value: percent,
+      });
+    }
+  }
+
+  lineData.sort((a, b) => a.name.localeCompare(b.name));
+  res.json(lineData);
+});
 
 // Chart 2.1
 app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes into the database and collects data, not sure the specifics yet

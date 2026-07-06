@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition } from './ChartContainer/ChartDataService.tsx';
+import { fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -14,6 +14,7 @@ import BarChartFinaidGradeComponent from './ChartContainer/BarChartFinaidGrade.t
 import PieChartFinaidComponent from './ChartContainer/PieChartFinaid.tsx';
 import BarChartRemissionComponent from './ChartContainer/BarChartRemission.tsx';
 import RemissionGrossTuitionComponent from './ChartContainer/RemissionGrossTuition.tsx';
+import AllAidTuitionComponent from './ChartContainer/AllAidTuition.tsx';
 
 
 // const API_URL = process.env.REACT_APP_API_URL;
@@ -53,6 +54,7 @@ const App: React.FC = () => {
   const [finaidRewardsSize, setFinaidRewardsSize] = useState<any>(null);
   const [remissionData, setRemissionData] = useState<any>(null);
   const [remissionGrossTuitionData, setRemissionGrossTuitionData] = useState<any>(null);
+  const [allAidTuitionData, setAllAidTuitionData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -412,6 +414,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateAllAidTuition = async () => {
+    try {
+      const result = await fetchAidRemissionPercent();
+      if (result) {
+        setAllAidTuitionData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching all aid to tuition data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -596,6 +609,8 @@ const App: React.FC = () => {
           ), chart: finaidRewardsSize && <PieChartFinaidComponent data={finaidRewardsSize} /> },
           { label: 'Remission Bar Chart', title: 'Bar Chart', desc: 'Total Remission by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionBar, chart: remissionData && <BarChartRemissionComponent data={remissionData} /> },
           { label: 'Remission to Tuition Line Graph', title: 'Line Graph', desc: 'Total Remission relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionGrossTuition, chart: remissionGrossTuitionData && <RemissionGrossTuitionComponent data={remissionGrossTuitionData} /> },
+          { label: 'All Aid to Tuition Line Graph', title: 'Line Graph', desc: 'All aid relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAllAidTuition, chart: allAidTuitionData && <AllAidTuitionComponent data={allAidTuitionData} /> },
+
 
 
 

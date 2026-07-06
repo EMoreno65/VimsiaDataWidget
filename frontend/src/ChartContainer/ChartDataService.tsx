@@ -208,3 +208,12 @@ export async function fetchRemissionToTuition(): Promise<LineGraphData> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchAidRemissionPercent(): Promise<LineGraphData> {
+    const response = await fetch(`${API_URL}/api/all-aid-percent-gross`);
+    if (!response.ok) {
+        throw new Error(`Error fetching finaid rewards by size: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}
