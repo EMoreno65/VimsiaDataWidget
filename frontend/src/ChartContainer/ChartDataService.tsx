@@ -226,3 +226,21 @@ export async function fetchApplicationData(): Promise<BarChartData> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 }
+
+export async function fetchApplicationNewStudentData(): Promise<LineGraphData[]> {
+    const response = await fetch(`${API_URL}/api/applications-per-new-student`);
+    if (!response.ok) {
+        throw new Error(`Error fetching application and new student data: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+}
+
+export async function fetchSelectivityByYearData(): Promise<LineGraphData[]> {
+    const response = await fetch(`${API_URL}/api/selectivity-by-year`);
+    if (!response.ok) {
+        throw new Error(`Error fetching selectivity by year data: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+};

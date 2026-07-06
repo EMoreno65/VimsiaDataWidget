@@ -1474,6 +1474,7 @@ app.get('/api/make-multibar-enrollment-division', async (_req, res) => {
   res.json({ chartData, terms }); // Send the chart data and the list of terms back to the client as a JSON response, which will be used to render the multi-bar chart on the frontend
 });
 
+// Chart 1.1
 app.get('/api/completed-applications-by-year', async (_req, res) => {
   const completedApplications = await prisma.admissionData.groupBy({
     by: ['termName', 'applications'],
@@ -1488,6 +1489,38 @@ app.get('/api/completed-applications-by-year', async (_req, res) => {
     barChartData[termName] = applications;
   }
   res.json(barChartData);
+});
+
+// Chart 1.2
+app.get('/api/applications-per-new-student', async (_req, res) => {
+  const applicationsAndNewStudents = await prisma.admissionData.groupBy({
+    by: ['termName', 'applications', 'newStudents'],
+  });
+
+  const lineData = applicationsAndNewStudents
+    .map((entry) => ({
+      name: entry.termName,
+      value: entry.newStudents > 0 ? entry.applications / entry.newStudents : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json(lineData);
+});
+
+// Chart 1.3
+app.get('/api/selectivity-by-year', async (_req, res) => {
+  const applicationsAndNewStudents = await prisma.admissionData.groupBy({
+    by: ['termName', 'applications', 'acceptances'],
+  });
+
+  const lineData = applicationsAndNewStudents
+    .map((entry) => ({
+      name: entry.termName,
+      value: entry.acceptances > 0 ? entry.acceptances / entry.applications : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json(lineData);
 });
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
