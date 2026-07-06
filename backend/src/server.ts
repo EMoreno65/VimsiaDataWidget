@@ -1523,6 +1523,39 @@ app.get('/api/selectivity-by-year', async (_req, res) => {
   res.json(lineData);
 });
 
+// Chart 1.4
+app.get('/api/yield-by-year', async (_req, res) => {
+  const completedApplications = await prisma.admissionData.groupBy({
+    by: ['termName', 'acceptances', 'newStudents'],
+  });
+  const barChartData: Record<string, number> = {};
+  for (const index in completedApplications) {
+    let termName = completedApplications[index].termName;
+    let acceptances = completedApplications[index].acceptances;
+    let newStudents = completedApplications[index].newStudents;
+    barChartData[termName] = acceptances > 0 ? newStudents / acceptances : 0;
+  }
+  res.json(barChartData);
+});
+
+// Chart 1.6
+app.get('/api/admission-trends', async (_req, res) => {
+  const admissionRows = await prisma.admissionData.groupBy({
+    by: ['termName', 'applications', 'acceptances', 'newStudents'],
+  });
+
+  const chartData = admissionRows
+    .map((entry) => ({
+      name: entry.termName,
+      applicationsToNewStudents: entry.newStudents > 0 ? entry.applications / entry.newStudents : 0,
+      acceptanceRate: entry.applications > 0 ? entry.acceptances / entry.applications : 0,
+      yield: entry.acceptances > 0 ? entry.newStudents / entry.acceptances : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json(chartData);
+});
+
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello
   res.json({ status: 'ok', message: 'Vimsia backend running' });
 });

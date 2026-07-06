@@ -244,3 +244,21 @@ export async function fetchSelectivityByYearData(): Promise<LineGraphData[]> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 };
+
+export async function fetchYieldByYearData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/yield-by-year`);
+    if (!response.ok) {
+        throw new Error(`Error fetching yield by year data: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+};
+
+export async function fetchAllAdmissionData(): Promise<LineGraphData[]> {
+    const response = await fetch(`${API_URL}/api/admission-trends`);
+    if (!response.ok) {
+        throw new Error(`Error fetching all admission data: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+};

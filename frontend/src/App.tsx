@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData } from './ChartContainer/ChartDataService.tsx';
+import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -18,6 +18,8 @@ import AllAidTuitionComponent from './ChartContainer/AllAidTuition.tsx';
 import BarChartApplicationComponent from './ChartContainer/BarChartApplication.tsx';
 import ApplicationNewStudentComponent from './ChartContainer/ApplicationNewStudent.tsx';
 import SelectivityByYearComponent from './ChartContainer/SelectivityByYear.tsx';
+import YieldByYearComponent from './ChartContainer/YieldByYear.tsx';
+import AdmissionTrendsComponent from './ChartContainer/AdmissionTrends.tsx';
 
 
 // const API_URL = process.env.REACT_APP_API_URL;
@@ -61,6 +63,8 @@ const App: React.FC = () => {
   const [applicationData, setApplicationData] = useState<any>(null);
   const [applicationNewStudentData, setApplicationNewStudentData] = useState<any>(null);
   const [selectivityByYearData, setSelectivityByYearData] = useState<any>(null);
+  const [yieldByYearData, setYieldByYearData] = useState<any>(null);
+  const [allAdmissionData, setAllAdmissionData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -491,6 +495,29 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateYieldByYearChart = async () => {
+    try {
+      const result = await fetchYieldByYearData();
+      if (result) {
+        setYieldByYearData(result);
+      }
+    }
+    catch (err) {
+      console.error('Error fetching yield by year data: ', err);
+    }
+  };
+
+  const handleGenerateAdmissionTrends = async () => {
+    try {
+      const result = await fetchAllAdmissionData();
+      if (result) {
+        setAllAdmissionData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching admission trends data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -608,6 +635,8 @@ const App: React.FC = () => {
           { label: 'Application Bar Chart', title: 'Bar Chart', desc: 'Completed Applications by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateApplicationChart, chart: applicationData && <BarChartApplicationComponent data={applicationData} /> },
           { label: 'Application New Student', title: 'Line Graph', desc: 'Applications per New Student', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateApplicationNewStudentChart, chart: applicationNewStudentData && <ApplicationNewStudentComponent data={applicationNewStudentData} /> },
           { label: 'Selectivity by Year', title: 'Line Graph', desc: 'Selectivity by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateSelectivityByYearChart, chart: selectivityByYearData && <SelectivityByYearComponent data={selectivityByYearData} /> },
+          { label: 'Yield by Year', title: 'Line Graph', desc: 'Yield by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateYieldByYearChart, chart: yieldByYearData && <YieldByYearComponent data={yieldByYearData} /> },
+          { label: 'Admission Trends', title: 'Line Graph', desc: 'Admission Trends', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAdmissionTrends, chart: allAdmissionData && <AdmissionTrendsComponent data={allAdmissionData} /> },
           { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
           { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
           { label: 'Enrollment · Division', title: 'Line graph', desc: 'Enrollment trends per division over time.', accent: '#854F0B', bg: '#FAEEDA', onClick: handleGenerateEnrollmentDivisionLineData, chart: enrollmentDivisionLineData && <MultiLineGraphComponent data={enrollmentDivisionLineData} /> },
