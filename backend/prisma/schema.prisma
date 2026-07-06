@@ -45,4 +45,12 @@ model TuitionRate {
   @@unique([termName, grade])
 }
 
+model AdmissionData {
+  id             Int      @id @default(autoincrement())
+  termName       String
+  applications   Int
+  acceptances    Int
+  newStudents    Int
+}
+
 

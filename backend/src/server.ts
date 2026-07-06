@@ -59,6 +59,48 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+app.post('/api/upload-admission-image', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No image file uploaded' });
+    }
+
+    const imageData = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType, data: imageData }
+          },
+          {
+            type: 'text',
+            text: 'Extract all submitted applications, offers sent, and processed finished. Return ONLY a JSON array, no markdown, no explanation. Format: [{"termName": "2025-2026", "applications": 107, "acceptances": 100, "newStudents": 81"}, ...]. Find the year listed in the drop down on the left an insert that into the termName. The teal number under "YTD Total" is the applications, the red number under "YTD Total" is the acceptances, and the gray number under "YTD Total" is the new students.'
+          }
+        ]
+      }]
+    });
+
+    const raw = message.content
+      .map(block => block.type === 'text' ? block.text : '') 
+      .join(' ')
+      .replace(/```json|```/g, '')
+      .trim();
+
+    if (!raw) {
+      throw new Error('Failed');
+    }
+
+    const rows: { grade: string; amount: number | null }[] = JSON.parse(raw);
+    
+  }
+});
+
 app.post('/api/upload-fee-image', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
