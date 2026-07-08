@@ -282,6 +282,82 @@ app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) =>
   }
 });
 
+app.post('/api/upload-attrition-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No file uploaded' });
+    }
+
+    const csvText = req.file.buffer.toString('utf8');
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: 'From this csv, can you create a json array of objects with the following keys: "termName", "grade", "attritionCount". Return ONLY a JSON array, no markdown, no explanation. Format: [{"termName": "2025-2026", "grade": "PK", "attritionCount": 5}, ...]. The year comes from the start of the csv, the grade comes from the respective column right of where it says "status". And the attrition count is to the right of where it says withdrawn added to where it says "Total Withdrawn during School Year". Return the array with each year/grade plus the total per year.'
+          },
+          {
+            type: 'text',
+            text: csvText
+          }
+        ]
+      }]
+    });
+
+    const raw = message.content
+      .map(block => block.type === 'text' ? block.text : '')
+      .join(' ')
+      .replace(/```json|```/g, '')
+      .trim();
+
+    if (!raw) {
+      throw new Error('Anthropic response did not include any text output');
+    }
+
+    const parsedRows = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
+
+    const validRows = parsedRows.filter((row: any) => {
+      const termName = typeof row?.termName === 'string' ? row.termName.trim() : '';
+      const grade = typeof row?.grade === 'string' || typeof row?.grade === 'number' ? String(row.grade).trim() : '';
+      const withdraws = Number(row?.attritionCount ?? row?.withdraws ?? 0);
+
+      return Boolean(termName) && Boolean(grade) && !Number.isNaN(withdraws);
+    }).map((row: any) => ({
+      termName: String(row.termName).trim(),
+      grade: String(row.grade).trim(),
+      withdraws: Number(row.attritionCount ?? row.withdraws ?? 0),
+    }));
+
+    if (validRows.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No valid attrition rows found in AI output' });
+    }
+
+    const data: Prisma.AttritionDataCreateManyInput[] = validRows.map((row: any) => ({
+      termName: row.termName,
+      grade: row.grade,
+      withdraws: row.withdraws,
+    }));
+
+    const result = await prisma.attritionData.createMany({
+      data,
+      skipDuplicates: true,
+    });
+
+    res.json({
+      status: 'ok',
+      message: `Inserted ${result.count} attrition records`,
+      data: validRows,
+    });
+  } catch (err) {
+    console.error('Error processing attrition CSV:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to process attrition CSV' });
+  }
+});
+
 app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Request & { file?: Express.Multer.File }, res: Response) => { // This is an API endpoint that handles POST requests to /api/upload-enrollment-csv, expecting a single file upload with the field name 'file'
   try {
     if (!req.file) {
@@ -1554,6 +1630,64 @@ app.get('/api/admission-trends', async (_req, res) => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   res.json(chartData);
+});
+
+// Chart 5.1
+app.get('/api/attrition-to-enrollment', async (_req, res) => {
+  const attritionRows = await prisma.attritionData.findMany({
+    select: { termName: true, withdraws: true, grade: true }
+  });
+  const enrollmentRows = await prisma.testEnrollment.groupBy({
+    by: ['termName', 'grade'],
+    _count: { grade: true }
+  });
+
+  const normalizeTerm = (term: string | null | undefined) =>
+    (term ?? '').replace(/\s+School Year$/i, '').trim();
+
+  const isExcludedGrade = (grade: string | null | undefined) => {
+    const normalized = (grade ?? '').trim().toLowerCase();
+    return normalized === '12' || normalized === '12th' || normalized === 'twelfth';
+  };
+
+  const totalsByTerm: Record<string, { enrollment: number; withdraws: number }> = {};
+
+  enrollmentRows.forEach((enrollment) => {
+    const term = normalizeTerm(enrollment.termName);
+    if (!term || isExcludedGrade(enrollment.grade)) {
+      return;
+    }
+
+    if (!totalsByTerm[term]) {
+      totalsByTerm[term] = { enrollment: 0, withdraws: 0 };
+    }
+
+    totalsByTerm[term].enrollment += enrollment._count.grade;
+  });
+
+  attritionRows.forEach((attrition) => {
+    const term = normalizeTerm(attrition.termName);
+    if (!term || isExcludedGrade(attrition.grade)) {
+      return;
+    }
+
+    if (!totalsByTerm[term]) {
+      totalsByTerm[term] = { enrollment: 0, withdraws: 0 };
+    }
+
+    totalsByTerm[term].withdraws += attrition.withdraws;
+  });
+
+  const barChartData = Object.fromEntries(
+    Object.entries(totalsByTerm)
+      .map(([term, totals]) => {
+        const denominator = totals.enrollment + totals.withdraws;
+        return [term, denominator > 0 ? totals.withdraws / denominator : 0];
+      })
+      .sort(([a], [b]) => String(a).localeCompare(String(b)))
+  );
+
+  res.json(barChartData);
 });
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello

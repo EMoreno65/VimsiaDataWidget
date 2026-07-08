@@ -53,4 +53,11 @@ model AdmissionData {
   newStudents    Int
 }
 
+model AttritionData {
+  id        Int    @id @default(autoincrement())
+  termName  String
+  grade     String
+  withdraws Int
+}
+
 

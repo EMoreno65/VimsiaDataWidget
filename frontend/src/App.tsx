@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData } from './ChartContainer/ChartDataService.tsx';
+import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData, fetchAttritionProportionData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -20,6 +20,7 @@ import ApplicationNewStudentComponent from './ChartContainer/ApplicationNewStude
 import SelectivityByYearComponent from './ChartContainer/SelectivityByYear.tsx';
 import YieldByYearComponent from './ChartContainer/YieldByYear.tsx';
 import AdmissionTrendsComponent from './ChartContainer/AdmissionTrends.tsx';
+import AttritionProportionComponent from './ChartContainer/AttritionProportion.tsx';
 
 
 // const API_URL = process.env.REACT_APP_API_URL;
@@ -65,6 +66,7 @@ const App: React.FC = () => {
   const [selectivityByYearData, setSelectivityByYearData] = useState<any>(null);
   const [yieldByYearData, setYieldByYearData] = useState<any>(null);
   const [allAdmissionData, setAllAdmissionData] = useState<any>(null);
+  const [attritionProportionData, setAttritionProportionData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -72,6 +74,30 @@ const App: React.FC = () => {
       .then((data: ApiResponse) => setMessage(data.message))
       .catch((err) => setMessage(`Error: ${err.message}`));
   }, []);
+
+  const handleAttritionUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadStatus('Uploading...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_URL}/api/upload-attrition-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+      if (res.ok) {
+        setUploadStatus('Upload successful!');
+      } else {
+        setUploadStatus(`Upload failed: ${result.message}`);
+      }
+    } catch (err) {
+      setUploadStatus('Upload failed: could not reach server');
+    }
+  };
 
   const handleEnrollmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -518,6 +544,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateAttritionProportion = async () => {
+    try {
+      const result = await fetchAttritionProportionData();
+      if (result) {
+        setAttritionProportionData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching attrition proportion data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -555,6 +592,16 @@ const App: React.FC = () => {
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
           <input type="file" accept=".csv" onChange={handleEnrollmentUpload} style={{ display: 'none' }} />
           ↑ Choose CSV file
+        </label>
+        {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
+      </div>
+
+      {/* Upload bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
+          <input type="file" accept=".csv" onChange={handleAttritionUpload} style={{ display: 'none' }} />
+          ↑ Choose Attrition CSV file
         </label>
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>
@@ -717,10 +764,7 @@ const App: React.FC = () => {
           { label: 'Remission Bar Chart', title: 'Bar Chart', desc: 'Total Remission by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionBar, chart: remissionData && <BarChartRemissionComponent data={remissionData} /> },
           { label: 'Remission to Tuition Line Graph', title: 'Line Graph', desc: 'Total Remission relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionGrossTuition, chart: remissionGrossTuitionData && <RemissionGrossTuitionComponent data={remissionGrossTuitionData} /> },
           { label: 'All Aid to Tuition Line Graph', title: 'Line Graph', desc: 'All aid relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAllAidTuition, chart: allAidTuitionData && <AllAidTuitionComponent data={allAidTuitionData} /> },
-
-
-
-
+          { label: 'Attrition Proportion', title: 'Bar Chart', desc: 'Proportion of Students Who Withdraw by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAttritionProportion, chart: attritionProportionData && <AttritionProportionComponent data={attritionProportionData} /> },
         ].map(({ label, title, desc, accent, bg, onClick, chart, control }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

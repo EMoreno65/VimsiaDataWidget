@@ -262,3 +262,12 @@ export async function fetchAllAdmissionData(): Promise<LineGraphData[]> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 };
+
+export async function fetchAttritionProportionData(): Promise<BarChartData[]> {
+    const response = await fetch(`${API_URL}/api/attrition-to-enrollment`);
+    if (!response.ok) {
+        throw new Error(`Error fetching attrition proportion data: ${response.statusText}`);
+    }
+    const finaidRewardsData = response.json();
+    return finaidRewardsData;
+};
