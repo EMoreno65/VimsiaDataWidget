@@ -1659,7 +1659,7 @@ app.get('/api/attrition-to-enrollment', async (_req, res) => {
     }
 
     if (!totalsByTerm[term]) {
-      totalsByTerm[term] = { enrollment: 0, withdraws: 0 };
+      totalsByTerm[term] = { enrollment: enrollment._count.grade, withdraws: 0 };
     }
 
     totalsByTerm[term].enrollment += enrollment._count.grade;
