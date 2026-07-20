@@ -336,7 +336,7 @@ app.post('/api/upload-attrition-csv', upload.single('file'), async (req: Request
       return res.status(400).json({ status: 'error', message: 'No valid attrition rows found in AI output' });
     }
 
-    const data: Prisma.AttritionDataCreateManyInput[] = validRows.map((row: any) => ({
+    const data = validRows.map((row: any) => ({
       termName: row.termName,
       grade: row.grade,
       withdraws: row.withdraws,
@@ -1634,7 +1634,7 @@ app.get('/api/admission-trends', async (_req, res) => {
 
 // Chart 5.1
 app.get('/api/attrition-to-enrollment', async (_req, res) => {
-  const attritionRows = await prisma.attritionData.findMany({
+  const attritionRows =  await prisma.attritionData.findMany({
     select: { termName: true, withdraws: true, grade: true }
   });
   const enrollmentRows = await prisma.testEnrollment.groupBy({
@@ -1647,7 +1647,7 @@ app.get('/api/attrition-to-enrollment', async (_req, res) => {
 
   const isExcludedGrade = (grade: string | null | undefined) => {
     const normalized = (grade ?? '').trim().toLowerCase();
-    return normalized === '12' || normalized === '12th' || normalized === 'twelfth';
+    return normalized === '12' || normalized === '12th' || normalized === 'twelfth' || normalized === 'p1' || normalized === 'p2' || normalized === 'p3' || normalized === 'toddler' || normalized === 'la casa' || normalized === 'total';
   };
 
   const totalsByTerm: Record<string, { enrollment: number; withdraws: number }> = {};
@@ -1661,8 +1661,9 @@ app.get('/api/attrition-to-enrollment', async (_req, res) => {
     if (!totalsByTerm[term]) {
       totalsByTerm[term] = { enrollment: enrollment._count.grade, withdraws: 0 };
     }
-
-    totalsByTerm[term].enrollment += enrollment._count.grade;
+    else {
+      totalsByTerm[term].enrollment += enrollment._count.grade;
+    }
   });
 
   attritionRows.forEach((attrition) => {
@@ -1688,6 +1689,99 @@ app.get('/api/attrition-to-enrollment', async (_req, res) => {
   );
 
   res.json(barChartData);
+});
+
+// Chart 5.1 (division-based attrition percentages)
+app.get('/api/attrition-to-enrollment-by-division', async (_req, res) => {
+  const attritionRows = await prisma.attritionData.findMany({
+    select: { termName: true, withdraws: true, grade: true },
+  });
+  const enrollmentRows = await prisma.testEnrollment.groupBy({
+    by: ['termName', 'grade'],
+    _count: { grade: true },
+  });
+
+  const normalizeTerm = (term: string | null | undefined) =>
+    (term ?? '').replace(/\s+School Year$/i, '').trim();
+
+  const divisionForGrade = (grade: string | null | undefined) => {
+    const normalized = (grade ?? '').trim().toLowerCase();
+
+    if (['pk', 'pre-k', 'prek', 'pre k', 'kindergarten', 'kinder', 'kindergarten/prek', 'primary'].includes(normalized)) {
+      return 'K-5';
+    }
+
+    if (['1st', '1st grade', '2nd', '2nd grade', '3rd', '3rd grade', '4th', '4th grade', '5th', '5th grade', 'grade 1', 'grade 2', 'grade 3', 'grade 4', 'grade 5', '01', '02', '03', '04', '05'].includes(normalized)) {
+      return 'K-5';
+    }
+
+    if (['6th', '6th grade', '7th', '7th grade', '8th', '8th grade', '06', '07', '08'].includes(normalized)) {
+      return '6-8';
+    }
+
+    if (['9th', '9th grade', '10th', '10th grade', '11th', '11th grade', '09', '10', '11'].includes(normalized)) {
+      return '9-11';
+    }
+
+    return null;
+  };
+
+  const totalsByTerm: Record<string, Record<string, { enrollment: number; withdraws: number }>> = {};
+
+  enrollmentRows.forEach((enrollment) => {
+    const term = normalizeTerm(enrollment.termName);
+    const division = divisionForGrade(enrollment.grade);
+
+    if (!term || !division) {
+      return;
+    }
+
+    if (!totalsByTerm[term]) {
+      totalsByTerm[term] = {};
+    }
+
+    if (!totalsByTerm[term][division]) {
+      totalsByTerm[term][division] = { enrollment: 0, withdraws: 0 };
+    }
+
+    totalsByTerm[term][division].enrollment += enrollment._count.grade;
+  });
+
+  attritionRows.forEach((attrition) => {
+    const term = normalizeTerm(attrition.termName);
+    const division = divisionForGrade(attrition.grade);
+
+    if (!term || !division) {
+      return;
+    }
+
+    if (!totalsByTerm[term]) {
+      totalsByTerm[term] = {};
+    }
+
+    if (!totalsByTerm[term][division]) {
+      totalsByTerm[term][division] = { enrollment: 0, withdraws: 0 };
+    }
+
+    totalsByTerm[term][division].withdraws += attrition.withdraws;
+  });
+
+  const divisions = ['K-5', '6-8', '9-11'];
+  const chartData = Object.entries(totalsByTerm)
+    .map(([term, divisionTotals]) => {
+      const entry: Record<string, string | number> = { name: term };
+
+      divisions.forEach((division) => {
+        const totals = divisionTotals[division] ?? { enrollment: 0, withdraws: 0 };
+        const denominator = totals.enrollment + totals.withdraws;
+        entry[division] = denominator > 0 ? Number(((totals.withdraws / denominator) * 100).toFixed(2)) : 0;
+      });
+
+      return entry;
+    })
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+  res.json(chartData);
 });
 
 app.get('/api/hello', (_req, res) => { // This is a simple API endpoint that responds to GET requests at /api/hello

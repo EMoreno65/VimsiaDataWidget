@@ -271,3 +271,11 @@ export async function fetchAttritionProportionData(): Promise<BarChartData[]> {
     const finaidRewardsData = response.json();
     return finaidRewardsData;
 };
+
+export async function fetchAttritionDivisionProportionData(): Promise<any[]> {
+    const response = await fetch(`${API_URL}/api/attrition-to-enrollment-by-division`);
+    if (!response.ok) {
+        throw new Error(`Error fetching division attrition proportion data: ${response.statusText}`);
+    }
+    return response.json();
+};

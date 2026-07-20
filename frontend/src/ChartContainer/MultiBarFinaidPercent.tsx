@@ -49,8 +49,8 @@ const MultiBarFinaidPercent: React.FC<Props> = ({ chartData }) => {
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />  {/* grades across the bottom */}
-          <YAxis />
-          <Tooltip />
+          <YAxis tickFormatter={(value: number) => `${value}%`} />
+          <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, 'Percentage']} />
           <Legend />
 
             {termNames.map((term, index) => (

@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData, fetchAttritionProportionData } from './ChartContainer/ChartDataService.tsx';
+import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData, fetchAttritionProportionData, fetchAttritionDivisionProportionData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -67,6 +67,7 @@ const App: React.FC = () => {
   const [yieldByYearData, setYieldByYearData] = useState<any>(null);
   const [allAdmissionData, setAllAdmissionData] = useState<any>(null);
   const [attritionProportionData, setAttritionProportionData] = useState<any>(null);
+  const [attritionDivisionProportionData, setAttritionDivisionProportionData] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -555,6 +556,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateAttritionDivisionProportion = async () => {
+    try {
+      const result = await fetchAttritionDivisionProportionData();
+      if (result) {
+        setAttritionDivisionProportionData(result);
+      }
+    } catch (err) {
+      console.error('Error fetching division attrition proportion data: ', err);
+    }
+  };
+
   // const handleGenerateFinaidRewardsGrade = async () => {
   //   try {
   //     const result = await fetchFinaidRewardsGrade();
@@ -765,6 +777,7 @@ const App: React.FC = () => {
           { label: 'Remission to Tuition Line Graph', title: 'Line Graph', desc: 'Total Remission relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateRemissionGrossTuition, chart: remissionGrossTuitionData && <RemissionGrossTuitionComponent data={remissionGrossTuitionData} /> },
           { label: 'All Aid to Tuition Line Graph', title: 'Line Graph', desc: 'All aid relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAllAidTuition, chart: allAidTuitionData && <AllAidTuitionComponent data={allAidTuitionData} /> },
           { label: 'Attrition Proportion', title: 'Bar Chart', desc: 'Proportion of Students Who Withdraw by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAttritionProportion, chart: attritionProportionData && <AttritionProportionComponent data={attritionProportionData} /> },
+          { label: 'Attrition Proportion by Division', title: 'Multi Bar Chart', desc: 'Withdrawals as a percentage of enrollment for K-5, 6-8, and 9-11 by year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAttritionDivisionProportion, chart: attritionDivisionProportionData && <MultiBarFinaidPercent chartData={attritionDivisionProportionData} /> },
         ].map(({ label, title, desc, accent, bg, onClick, chart, control }) => (
           <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
