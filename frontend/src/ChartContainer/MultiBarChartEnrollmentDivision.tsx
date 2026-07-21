@@ -4,21 +4,14 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-type ChartEntry = Record<string, string | number>; // { name: division, [term]: count }
+type ChartEntry = Record<string, string | number>;
 
 type Props = {
   chartData: ChartEntry[];
   terms: string[];
 };
 
-const TERM_COLORS = [
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff8042',
-  '#0088fe',
-  '#00C49F',
-];
+const TERM_COLORS = ['#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
 
 const MultiBarChartEnrollmentDivisionComponent: React.FC<Props> = ({ chartData, terms }) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -33,24 +26,25 @@ const MultiBarChartEnrollmentDivisionComponent: React.FC<Props> = ({ chartData, 
     link.click();
   };
 
+  const orderedTerms = [...terms].sort((a, b) => String(a).localeCompare(String(b)));
+
   return (
     <div ref={chartRef}>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />  {/* divisions across the bottom */}
-          <YAxis />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="name" tickLine={false} axisLine={false} />
+          <YAxis tickLine={false} axisLine={false} />
           <Tooltip />
           <Legend />
-
-            <Bar dataKey="2021-2022 School Year" fill={TERM_COLORS[0]} />
-            <Bar dataKey="2022-2023 School Year" fill={TERM_COLORS[1]} />
-            <Bar dataKey="2023-2024 School Year" fill={TERM_COLORS[2]} />
-            <Bar dataKey="2024-2025 School Year" fill={TERM_COLORS[3]} />
-
+          {orderedTerms.map((term, index) => (
+            <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} radius={[4, 4, 0, 0]} />
+          ))}
         </BarChart>
       </ResponsiveContainer>
-      <button onClick={downloadChart}>Download Chart</button>
+      <button onClick={downloadChart} style={{ marginTop: 8, border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 12px', background: '#fff', cursor: 'pointer' }}>
+        Download Chart
+      </button>
     </div>
   );
 };

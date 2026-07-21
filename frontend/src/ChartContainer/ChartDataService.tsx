@@ -22,15 +22,6 @@ type LineGraphData = {
     value: number;
 }
 
-export async function fetchPieChartData(): Promise<PieChartData[]> {
-    const response = await fetch(`${API_URL}/api/make-chart`); // This is where we would call the backend API to get the data for the pie chart. For now, it's just a placeholder endpoint
-    if (!response.ok) {
-        throw new Error(`Error fetching pie chart data: ${response.statusText}`);
-    }
-    const pieData = await response.json();
-    return pieData; // This should return the data in the format that the PieChart component expects, which is an array of objects with 'name' and 'value' properties
-}
-
 export async function fetchEnrollmentMultiBarData(): Promise<MultiChartData> {
     const response = await fetch(`${API_URL}/api/make-enrollment-multi-bar`); // This is where we would call the backend API to get the data for the multi bar chart. For now, it's just a placeholder endpoint
     if (!response.ok) {
@@ -38,15 +29,6 @@ export async function fetchEnrollmentMultiBarData(): Promise<MultiChartData> {
     }
     const multiBarData = await response.json();
     return multiBarData; // This should return the data in the format that the MultiBarChart component expects, which is a dictionary where keys are group names and values are dictionaries of subgroup names and their corresponding values
-}
-
-export async function fetchBarChartData(): Promise<BarChartData[]> {
-    const response = await fetch(`${API_URL}/api/make-chart`);
-    if (!response.ok) {
-        throw new Error(`Error fetching bar chart data: ${response.statusText}`);
-    }
-    const barChartData = await response.json();
-    return barChartData; // This should return the data in the format that the BarChart component expects, which is an array of objects with 'name' and 'value' properties
 }
 
 export async function fetchEnrollmentCapacityLineData(): Promise<LineGraphData[]> {

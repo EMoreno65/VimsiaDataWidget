@@ -10,22 +10,14 @@ type Props = {
   chartData: ChartEntry[];
 };
 
-const TERM_COLORS = [
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff8042',
-  '#0088fe',
-  '#00C49F',
-];
+const TERM_COLORS = ['#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
 
 const MultiBarFinaidPercent: React.FC<Props> = ({ chartData }) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Extract unique term names from the data dynamically
   const termNames: string[] = [];
   if (chartData && chartData.length > 0) {
-    Object.keys(chartData[0]).forEach(key => {
+    Object.keys(chartData[0]).forEach((key) => {
       if (key !== 'name' && typeof chartData[0][key] === 'number') {
         termNames.push(key);
       }
@@ -33,7 +25,6 @@ const MultiBarFinaidPercent: React.FC<Props> = ({ chartData }) => {
   }
 
   const downloadChart = async () => {
-    console.log("I'm in the multi-bar component, I need to diagnose the problem");
     if (!chartRef.current) return;
     const htmlToImage = await import('html-to-image');
     const dataUrl = await htmlToImage.toPng(chartRef.current);
@@ -43,23 +34,29 @@ const MultiBarFinaidPercent: React.FC<Props> = ({ chartData }) => {
     link.click();
   };
 
+  const orderedChartData = [...chartData].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const formatTooltipValue = (value: number | string | undefined) => {
+    const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+    return [`${numericValue.toFixed(2)}%`, 'Percentage'];
+  };
+
   return (
     <div ref={chartRef}>
       <ResponsiveContainer width="100%" height={400}>
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />  {/* grades across the bottom */}
-          <YAxis tickFormatter={(value: number) => `${value}%`} />
-          <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, 'Percentage']} />
+        <BarChart data={orderedChartData}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="name" tickLine={false} axisLine={false} />
+          <YAxis tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
+          <Tooltip formatter={(value: any) => formatTooltipValue(value)} />
           <Legend />
-
-            {termNames.map((term, index) => (
-              <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} />
-            ))}
-
+          {termNames.map((term, index) => (
+            <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} radius={[4, 4, 0, 0]} />
+          ))}
         </BarChart>
       </ResponsiveContainer>
-      <button onClick={downloadChart}>Download Chart</button>
+      <button onClick={downloadChart} style={{ marginTop: 8, border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 12px', background: '#fff', cursor: 'pointer' }}>
+        Download Chart
+      </button>
     </div>
   );
 };

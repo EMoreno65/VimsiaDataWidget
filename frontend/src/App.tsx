@@ -3,7 +3,7 @@ import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
-import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchPieChartData, fetchEnrollmentMultiBarData, fetchBarChartData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData, fetchAttritionProportionData, fetchAttritionDivisionProportionData } from './ChartContainer/ChartDataService.tsx';
+import { fetchApplicationNewStudentData, fetchAidRemissionPercent, fetchTuitionRemissionTerm, fetchFinaidRewardsSize, fetchFinaidRewardsGrade, fetchFinaidPercentRevenue, fetchFinaidIncreaseData, fetchTuitionIncreaseData, fetchTuitionGradeData, fetchEnrollmentMultiBarData, fetchEnrollmentCapacityLineData, fetchEnrollmentDivisionLineData, fetchEnrollmentDivisionMultiBarData, fetchFinaidBarData, fetchHighestTuitionYearData, fetchFinaidMultiBarData, fetchFinaidPercentRevenueDivision, fetchFinaidPercentRevenueGrade, fetchRemissionToTuition, fetchApplicationData, fetchSelectivityByYearData, fetchYieldByYearData, fetchAllAdmissionData, fetchAttritionProportionData, fetchAttritionDivisionProportionData } from './ChartContainer/ChartDataService.tsx';
 import MultiLineGraphComponent from './ChartContainer/MultiLineGraph.tsx';
 import MultiBarChartEnrollmentDivisionComponent from './ChartContainer/MultiBarChartEnrollmentDivision.tsx';
 import MultiBarAidByGradeYear from './ChartContainer/MultiBarAidByGradeYear.tsx';
@@ -600,17 +600,17 @@ const App: React.FC = () => {
 
       {/* Upload bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
-        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Enrollment</span>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
           <input type="file" accept=".csv" onChange={handleEnrollmentUpload} style={{ display: 'none' }} />
-          ↑ Choose CSV file
+          ↑ Upload Enrollment CSV Here
         </label>
         {uploadStatus && <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{uploadStatus}</span>}
       </div>
 
       {/* Upload bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
-        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Attrition</span>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
           <input type="file" accept=".csv" onChange={handleAttritionUpload} style={{ display: 'none' }} />
           ↑ Choose Attrition CSV file
@@ -620,7 +620,7 @@ const App: React.FC = () => {
 
       {/* Upload bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
-        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Financial Aid - Please Select Year</span>
           <select
             value={financialAidTerm}
             onChange={(event) => setFinancialAidTerm(event.target.value)}
@@ -648,7 +648,7 @@ const App: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
-        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Admissions</span>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>
           <input type="file" accept=".png" onChange={handleAdmissionScreenshot} style={{ display: 'none' }} />
           ↑ Upload Admission Screenshot here
@@ -657,7 +657,7 @@ const App: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1.5rem', background: '#f9fafb', borderBottom: '0.5px solid #e5e7eb' }}>
-        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Data source</span>
+        <span style={{ fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>Tuition and Fees - Please Select Year</span>
         <select
           value={tuitionTerm}
           onChange={(event) => setTuitionTerm(event.target.value)}
@@ -696,11 +696,9 @@ const App: React.FC = () => {
           { label: 'Selectivity by Year', title: 'Line Graph', desc: 'Selectivity by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateSelectivityByYearChart, chart: selectivityByYearData && <SelectivityByYearComponent data={selectivityByYearData} /> },
           { label: 'Yield by Year', title: 'Line Graph', desc: 'Yield by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateYieldByYearChart, chart: yieldByYearData && <YieldByYearComponent data={yieldByYearData} /> },
           { label: 'Admission Trends', title: 'Line Graph', desc: 'Admission Trends', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAdmissionTrends, chart: allAdmissionData && <AdmissionTrendsComponent data={allAdmissionData} /> },
-          { label: 'Distribution', title: 'Pie Chart', desc: 'Proportional breakdown across categories.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGeneratePieChart, chart: pieData && <PieChartComponent data={pieData} /> },
           { label: 'Enrollment · Year', title: 'Multi-bar chart by year', desc: 'Compare enrollment figures across academic years.', accent: '#0F6E56', bg: '#E1F5EE', onClick: handleGenerateEnrollmentMultiBarChart, chart: enrollmentMultiBarData && <MultiBarChartEnrollmentYearComponent data={enrollmentMultiBarData} /> },
           { label: 'Enrollment · Division', title: 'Line graph', desc: 'Enrollment trends per division over time.', accent: '#854F0B', bg: '#FAEEDA', onClick: handleGenerateEnrollmentDivisionLineData, chart: enrollmentDivisionLineData && <MultiLineGraphComponent data={enrollmentDivisionLineData} /> },
           { label: 'Enrollment · Division', title: 'Multi-bar chart', desc: 'Side-by-side comparison across divisions and terms.', accent: '#993C1D', bg: '#FAECE7', onClick: handleGenerateEnrollmentDivisionMultiBarData, chart: enrollmentDivisionMultiBarData && <MultiBarChartEnrollmentDivisionComponent chartData={enrollmentDivisionMultiBarData.chartData} terms={enrollmentDivisionMultiBarData.terms} /> },
-          { label: 'General', title: 'Bar chart', desc: 'Categorical comparison across your dataset.', accent: '#534AB7', bg: '#EEEDFE', onClick: handleGenerateBarChart, chart: barChartData && <BarChartComponent data={barChartData} /> },
           { label: 'Capacity · Enrollment', title: 'Enrollment vs capacity', desc: 'Overlay enrollment against capacity limits.', accent: '#3B6D11', bg: '#EAF3DE', onClick: handleGenerateEnrollmentCapacityLineData, chart: enrollmentCapacityLineData && <LineGraphComponent data={enrollmentCapacityLineData} /> },
           { label: 'Financial Aid', title: 'Bar chart', desc: 'Comparison of financial aid distribution.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateFinaidBarData, chart: finaidBarData && <BarChartComponent data={finaidBarData} /> },
           { label: 'Tuition by Grade (Year-Based)', title: 'Bar chart', desc: 'Comparison of tuition by grade for a given year.', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateTuitionGradeData, chart: tuitionGradeData && <BarChartComponent data={tuitionGradeData} /> },

@@ -22,9 +22,9 @@ type Props = {
 };
 
 const LINES = [
-  { key: 'applicationsToNewStudents', color: '#8884d8' },
-  { key: 'acceptanceRate', color: '#82ca9d' },
-  { key: 'yield', color: '#ff7300' },
+  { key: 'applicationsToNewStudents', color: '#2563eb' },
+  { key: 'acceptanceRate', color: '#0f766e' },
+  { key: 'yield', color: '#f59e0b' },
 ];
 
 const AdmissionTrendsComponent: React.FC<Props> = ({ data }) => {
@@ -33,9 +33,9 @@ const AdmissionTrendsComponent: React.FC<Props> = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="name" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
         <Tooltip />
         <Legend />
 
@@ -45,7 +45,8 @@ const AdmissionTrendsComponent: React.FC<Props> = ({ data }) => {
             type="monotone"
             dataKey={key}
             stroke={color}
-            strokeWidth={2}
+            strokeWidth={2.5}
+            dot={{ r: 3 }}
           />
         ))}
       </LineChart>

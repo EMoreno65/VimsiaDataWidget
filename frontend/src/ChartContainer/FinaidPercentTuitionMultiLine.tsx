@@ -22,18 +22,18 @@ type Props = {
 };
 
 const LINES = [
-  { key: 'Lower',    color: '#8884d8' },
-  { key: 'Middle', color: '#82ca9d' },
-  { key: 'Upper',      color: '#ff7300' },
+  { key: 'Lower', color: '#2563eb' },
+  { key: 'Middle', color: '#0f766e' },
+  { key: 'Upper', color: '#f59e0b' },
 ];
 
 const FinaidPercentTuitionMultiLineComponent: React.FC<Props> = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="name" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
         <Tooltip />
         <Legend />
 
@@ -43,7 +43,8 @@ const FinaidPercentTuitionMultiLineComponent: React.FC<Props> = ({ data }) => {
             type="monotone"
             dataKey={key}
             stroke={color}
-            strokeWidth={2}
+            strokeWidth={2.5}
+            dot={{ r: 3 }}
           />
         ))}
       </LineChart>

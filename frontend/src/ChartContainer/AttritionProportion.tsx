@@ -14,15 +14,20 @@ const AttritionProportionComponent: React.FC<Props> = ({ data }) => {
     value,
   }));
 
+  const formatTooltipValue = (value: number | string) => {
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    return `$${numericValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <ResponsiveContainer width="100%" height={400}>
       <BarChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="grade" />
-        <YAxis />
-        <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="grade" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <Tooltip formatter={(value) => formatTooltipValue(value as number | string)} />
         <Legend />
-        <Bar dataKey="value" fill="#8884d8" />
+        <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
