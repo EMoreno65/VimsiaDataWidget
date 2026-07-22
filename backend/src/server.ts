@@ -20,8 +20,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const databaseUrl = process.env.PROD_DATABASE_URL || process.env.DEV_DATABASE_URL;
+
 const pool = new pg.Pool({
-  connectionString: process.env.DEV_DATABASE_URL,
+  connectionString: databaseUrl,
 });
 
 const adapter = new PrismaPg(pool);
@@ -1383,39 +1385,70 @@ app.get('/api/make-enrollment-multi-bar', async (_req, res) => { // This goes in
 
 // Chart 2.3
 app.get('/api/make-enrollment-line-capacity', async (_req, res) => {
-  const grade_capacities = {
-    '1st': 20, '2nd': 20, '3rd': 20, '4th': 20, '5th': 20,
-    '6th': 24, '7th': 24, '8th': 24, '9th': 24,
-    '10th': 24, '11th': 24, '12th': 24,
+  const gradeCapacities = {
+    'La Casa': 24,
+    'P1': 30,
+    'P2': 30,
+    'P3': 30,
+    '1st': 20,
+    '2nd': 20,
+    '3rd': 20,
+    '4th': 20,
+    '5th': 20,
+    '6th': 24,
+    '7th': 24,
+    '8th': 24,
+    '9th': 24,
+    '10th': 24,
+    '11th': 24,
+    '12th': 24,
+  } as const;
+
+  const totalCapacity = Object.values(gradeCapacities).reduce((sum, value) => sum + value, 0);
+
+  const normalizeGrade = (grade: string | null | undefined) => {
+    const normalized = (grade ?? '').trim().toLowerCase();
+
+    if (['toddler', 'la casa', 'la-casa', 'lacas'].includes(normalized)) {
+      return 'La Casa';
+    }
+
+    if (['primary', 'p3'].includes(normalized)) {
+      return 'P3';
+    }
+
+    return grade?.trim() || '';
   };
 
   const grouped = await prisma.testEnrollment.groupBy({
     by: ['termName', 'grade'],
-    _count: { grade: true }
+    _count: { grade: true },
   });
 
-  const termTotals: Record<string, { enrolled: number; capacity: number }> = {};
+  const termTotals: Record<string, number> = {};
 
-  grouped.forEach(item => {
+  grouped.forEach((item) => {
     const term = item.termName;
-    const grade = item.grade;
+    const grade = normalizeGrade(item.grade);
     const count = item._count.grade;
-    const capacity = grade_capacities[grade as keyof typeof grade_capacities] ?? 0;
 
-    if (!termTotals[term]) {
-      termTotals[term] = { enrolled: 0, capacity: 0 };
+    if (!term || !grade) {
+      return;
     }
 
-    termTotals[term].enrolled += count;
-    termTotals[term].capacity += capacity;
+    if (!termTotals[term]) {
+      termTotals[term] = 0;
+    }
+
+    termTotals[term] += count;
   });
 
   const chartData = Object.entries(termTotals)
-    .map(([term, { enrolled, capacity }]) => ({
+    .map(([term, enrolled]) => ({
       name: term,
-      value: capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0,
+      value: totalCapacity > 0 ? Math.round((enrolled / totalCapacity) * 100) : 0,
     }))
-    .sort((a, b) => a.name.localeCompare(b.name)); 
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   res.json(chartData);
 });
@@ -1424,8 +1457,12 @@ app.get('/api/make-enrollment-line-capacity', async (_req, res) => {
 app.get('/api/make-enrollment-line-division', async (_req, res) => {
 
   const gradeDivisionMap: Record<string, string> = {
-    toddler: 'Casa',
-    primary: 'Primary',
+    'toddler': 'Casa',
+    'P1': 'Casa',
+    'P2': 'Casa',
+    'La Casa': 'Casa',
+    'primary': 'Primary',
+    'P3': 'Primary',
 
     '1st': 'LE',
     '2nd': 'LE',
@@ -1487,8 +1524,12 @@ app.get('/api/make-enrollment-line-division', async (_req, res) => {
 app.get('/api/make-multibar-enrollment-division', async (_req, res) => {
 
   const gradeDivisionMap: Record<string, string> = {
-    toddler: 'Casa',
-    primary: 'Primary',
+    'toddler': 'Casa',
+    'primary': 'Primary',
+    'P1': 'Casa',
+    'P2': 'Casa',
+    'La Casa': 'Casa',
+    'P3': 'Primary',
 
     '1st': 'LE',
     '2nd': 'LE',
@@ -1538,14 +1579,23 @@ app.get('/api/make-multibar-enrollment-division', async (_req, res) => {
 
   const divisions = ['Casa', 'Primary', 'LE', 'UE', 'MYP', 'DP'];
   const terms = Object.keys(termTotals).sort((a, b) => a.localeCompare(b)); // Sort terms alphabetically to ensure consistent order
+  const divisionCapacities: Record<string, number> = {
+    Casa: 84,
+    Primary: 30,
+    LE: 60,
+    UE: 40,
+    MYP: 120,
+    DP: 48,
+  };
 
   const chartData = divisions.map(division => {
     const entry: Record<string, string | number> = { name: division }; // The 'name' field is used by the chart to identify each group
     terms.forEach(term => {
       entry[term] = termTotals[term]?.[division] ?? 0; // Add the count for this division and term, or 0 if there is no data
-    })
+    });
+    entry.capacity = divisionCapacities[division] ?? 0;
     return entry;
-  })
+  });
 
   res.json({ chartData, terms }); // Send the chart data and the list of terms back to the client as a JSON response, which will be used to render the multi-bar chart on the frontend
 });

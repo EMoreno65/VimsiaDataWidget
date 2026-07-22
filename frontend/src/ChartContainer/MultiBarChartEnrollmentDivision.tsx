@@ -40,6 +40,7 @@ const MultiBarChartEnrollmentDivisionComponent: React.FC<Props> = ({ chartData, 
           {orderedTerms.map((term, index) => (
             <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} radius={[4, 4, 0, 0]} />
           ))}
+          <Bar key="capacity" dataKey="capacity" fill="#9ca3af" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
       <button onClick={downloadChart} style={{ marginTop: 8, border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 12px', background: '#fff', cursor: 'pointer' }}>
