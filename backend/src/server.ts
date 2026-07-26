@@ -20,7 +20,16 @@ if (process.env.NODE_ENV !== 'production') {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const databaseUrl = process.env.DEV_DATABASE_URL || process.env.DATABASE_URL || process.env.PROD_DATABASE_URL;
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.DEV_DATABASE_URL ||
+  process.env.PROD_DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('Missing database URL. Set DATABASE_URL in production or DEV_DATABASE_URL locally.');
+}
 
 const pool = new pg.Pool({
   connectionString: databaseUrl,
