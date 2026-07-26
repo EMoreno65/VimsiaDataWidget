@@ -7,9 +7,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const databaseUrl =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  process.env.POSTGRES_PRISMA_URL ||
   process.env.DEV_DATABASE_URL ||
   process.env.PROD_DATABASE_URL;
 

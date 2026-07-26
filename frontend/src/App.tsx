@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import PieChartComponent from './ChartContainer/PieChart.tsx';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
@@ -37,10 +36,8 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [tuitionTerm, setTuitionTerm] = useState<string>('2025-2026');
-  const [pieData, setPieData] = useState<any>(null);
   const [enrollmentMultiBarData, setEnrollmentMultiBarData] = useState<any>(null);
   const [enrollmentDivisionMultiBarData, setEnrollmentDivisionMultiBarData] = useState<any>(null);
-  const [barChartData, setBarChartData] = useState<any>(null);
   const [enrollmentCapacityLineData, setEnrollmentCapacityLineData] = useState<any>(null);
   const [enrollmentDivisionLineData, setEnrollmentDivisionLineData] = useState<any>(null);
   const [finaidBarData, setFinaidBarData] = useState<any>(null);
@@ -234,20 +231,6 @@ const App: React.FC = () => {
       }
   };   
 
-  const handleGeneratePieChart = async () => {
-    try {
-      const result = await fetchPieChartData();
-      if (result) {
-        console.log('Pie chart data:', result);
-        setPieData(result);
-      } else {
-        console.error('Failed to fetch pie chart data');
-      }
-    } catch (err) {
-      console.error('Error fetching pie chart data:', err);
-    }
-  };
-
   const handleGenerateEnrollmentMultiBarChart = async () => {
     try {
       const result = await fetchEnrollmentMultiBarData();
@@ -259,20 +242,6 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching multi-bar chart data:', err);
-    }
-  };
-
-  const handleGenerateBarChart = async () => {
-    try {
-      const result = await fetchBarChartData();
-      if (result) {
-        console.log('Bar chart data:', result);
-        setBarChartData(result);
-      } else {
-        console.error('Failed to fetch bar chart data');
-      }
-    } catch (err) {
-      console.error('Error fetching bar chart data:', err);
     }
   };
 
