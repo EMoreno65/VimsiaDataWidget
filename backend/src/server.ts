@@ -367,7 +367,7 @@ app.post('/api/upload-attrition-csv', upload.single('file'), async (req: Request
       withdraws: row.withdraws,
     }));
 
-    const termsToReplace = Array.from(new Set(data.map((row: any) => String(row.termName).trim()).filter(Boolean)));
+    const termsToReplace: string[] = Array.from(new Set(data.map((row: any) => String(row.termName).trim()).filter(Boolean)));
 
     const result = await prisma.$transaction(async (tx) => {
       if (termsToReplace.length > 0) {
