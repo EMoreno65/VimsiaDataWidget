@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MultiBarChartEnrollmentYearComponent from './ChartContainer/MultiBarChartEnrollmentYear.tsx';
 import BarChartComponent from './ChartContainer/BarChart.tsx';
 import LineGraphComponent from './ChartContainer/LineGraph.tsx';
@@ -64,6 +64,30 @@ const App: React.FC = () => {
   const [allAdmissionData, setAllAdmissionData] = useState<any>(null);
   const [attritionProportionData, setAttritionProportionData] = useState<any>(null);
   const [attritionDivisionProportionData, setAttritionDivisionProportionData] = useState<any>(null);
+  const chartDownloadRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const sanitizeFileName = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'chart';
+
+  const handleDownloadChart = async (chartKey: string, title: string) => {
+    const chartNode = chartDownloadRefs.current[chartKey];
+    if (!chartNode) return;
+
+    const htmlToImage = await import('html-to-image');
+    const dataUrl = await htmlToImage.toPng(chartNode, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: '#ffffff'
+    });
+
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${sanitizeFileName(title)}.png`;
+    link.click();
+  };
 
   useEffect(() => {
     fetch(`${API_URL}/api/hello`)
@@ -744,8 +768,12 @@ const App: React.FC = () => {
           { label: 'All Aid to Tuition Line Graph', title: 'Line Graph', desc: 'All aid relative to Gross Tuition by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAllAidTuition, chart: allAidTuitionData && <AllAidTuitionComponent data={allAidTuitionData} /> },
           { label: 'Attrition Proportion', title: 'Bar Chart', desc: 'Proportion of Students Who Withdraw by Year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAttritionProportion, chart: attritionProportionData && <AttritionProportionComponent data={attritionProportionData} /> },
           { label: 'Attrition Proportion by Division', title: 'Multi Bar Chart', desc: 'Withdrawals as a percentage of enrollment for K-5, 6-8, and 9-11 by year', accent: '#185FA5', bg: '#E6F1FB', onClick: handleGenerateAttritionDivisionProportion, chart: attritionDivisionProportionData && <MultiBarFinaidPercent chartData={attritionDivisionProportionData} /> },
-        ].map(({ label, title, desc, accent, bg, onClick, chart, control }) => (
-          <div key={title} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        ].map(({ label, title, desc, accent, bg, onClick, chart, control }, index) => {
+          const chartKey = `${title}-${index}`;
+          const hasChart = Boolean(chart);
+
+          return (
+          <div key={chartKey} style={{ background: '#fff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9ca3af', fontFamily: 'monospace', marginBottom: 2 }}>{label}</div>
@@ -758,9 +786,20 @@ const App: React.FC = () => {
             <button type="button" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto', fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}>
               ▶ Generate
             </button>
-            {chart}
+            {hasChart && (
+              <button
+                type="button"
+                onClick={() => handleDownloadChart(chartKey, title)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}
+              >
+                ↓ Download Chart
+              </button>
+            )}
+            <div ref={(node) => { chartDownloadRefs.current[chartKey] = node; }}>
+              {chart}
+            </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );

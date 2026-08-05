@@ -124,9 +124,18 @@ app.post('/api/upload-admission-image', upload.single('file'), async (req, res) 
       newStudents: row.newStudents,
     }));
 
-    const result = await prisma.admissionData.createMany({
-      data,
-      skipDuplicates: true,
+    const termsToReplace = Array.from(new Set(data.map(row => row.termName.trim()).filter(Boolean)));
+
+    const result = await prisma.$transaction(async (tx) => {
+      if (termsToReplace.length > 0) {
+        await tx.admissionData.deleteMany({
+          where: { termName: { in: termsToReplace } },
+        });
+      }
+
+      return tx.admissionData.createMany({
+        data,
+      });
     });
 
     if (result.count > 0) {
@@ -276,9 +285,14 @@ app.post('/api/upload-tuition-image', upload.single('file'), async (req, res) =>
       termName,
     }));
 
-    const result = await prisma.tuitionRate.createMany({
-      data,
-      skipDuplicates: true,
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.tuitionRate.deleteMany({
+        where: { termName },
+      });
+
+      return tx.tuitionRate.createMany({
+        data,
+      });
     });
 
     if (result.count > 0) {
@@ -353,9 +367,18 @@ app.post('/api/upload-attrition-csv', upload.single('file'), async (req: Request
       withdraws: row.withdraws,
     }));
 
-    const result = await prisma.attritionData.createMany({
-      data,
-      skipDuplicates: true,
+    const termsToReplace = Array.from(new Set(data.map((row: any) => String(row.termName).trim()).filter(Boolean)));
+
+    const result = await prisma.$transaction(async (tx) => {
+      if (termsToReplace.length > 0) {
+        await tx.attritionData.deleteMany({
+          where: { termName: { in: termsToReplace } },
+        });
+      }
+
+      return tx.attritionData.createMany({
+        data,
+      });
     });
 
     res.json({
@@ -411,9 +434,18 @@ app.post('/api/upload-enrollment-csv', upload.single('file'), async (req: Reques
     // console.log("DATABASE_URL:", process.env.DEV_DATABASE_URL);
 
     // console.log("Data is ", data);
-    const result = await prisma.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
-      data, // The data to be inserted, which is the array of objects we created from the CSV rows
-      skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
+    const termsToReplace = Array.from(new Set(data.map(row => String(row.termName ?? '').trim()).filter(Boolean)));
+
+    const result = await prisma.$transaction(async (tx) => {
+      if (termsToReplace.length > 0) {
+        await tx.testEnrollment.deleteMany({
+          where: { termName: { in: termsToReplace } },
+        });
+      }
+
+      return tx.testEnrollment.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
+        data, // The data to be inserted, which is the array of objects we created from the CSV rows
+      });
     })
     if (result.count > 0) { // If the count of inserted records is greater than 0, it means that new records were successfully added to the database
       res.json({ status: 'ok', message: 'CSV uploaded and processed successfully' }); // Send a JSON response back to the client indicating that the CSV was uploaded and processed successfully
@@ -481,9 +513,14 @@ app.post('/api/upload-finance-csv', upload.single('file'), async (req: Request &
     //   return res.status(400).json({ status: 'error', message: `Missing termName in ${missingTermRows.length} rows`, sample: missingTermRows.slice(0, 5) });
     // }
     // console.log("Data is ", data);
-    const result = await prisma.financeData.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
-      data, // The data to be inserted, which is the array of objects we created from the CSV rows
-      skipDuplicates: true, // This option tells Prisma to skip inserting records that would cause a duplicate key error, which can help prevent issues when uploading the same CSV multiple times
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.financeData.deleteMany({
+        where: { termName },
+      });
+
+      return tx.financeData.createMany({ // Use the Prisma Client to insert multiple records into the 'school' table in the database
+        data, // The data to be inserted, which is the array of objects we created from the CSV rows
+      });
     })
     if (result.count > 0) { // If the count of inserted records is greater than 0, it means that new records were successfully added to the database
       res.json({ status: 'ok', message: 'CSV uploaded and processed successfully' }); // Send a JSON response back to the client indicating that the CSV was uploaded and processed successfully

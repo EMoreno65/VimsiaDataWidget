@@ -11,8 +11,6 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-import { useRef } from "react";
-
 
 type MultiChartData = Record<string, Record<string, number>>;
 
@@ -55,20 +53,6 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
     "11th",
     "12th"
   ];
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  const downloadChart = async () => {
-    if (!chartRef.current) return;
-
-    const htmlToImage = await import("html-to-image");
-    const dataUrl = await htmlToImage.toPng(chartRef.current);
-
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = "chart.png";
-    link.click();
-  };
-
   const legendPayload = gradeOrder.map((grade) => ({
     value: grade,
     type: "square",
@@ -104,7 +88,7 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
 
   return (
 
-    <div ref={chartRef}>
+    <div>
       <ResponsiveContainer width="100%" height={400}>
 
         <BarChart data={chartData}>
@@ -132,9 +116,6 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
         </BarChart>
 
       </ResponsiveContainer>
-      <button onClick={downloadChart}>
-        Download Chart
-      </button>
     </div>
   );
 };
