@@ -33,6 +33,7 @@ interface ApiResponse {
 
 const App: React.FC = () => {
   const [message, setMessage] = useState<string>('Loading...');
+  const [showInstructions, setShowInstructions] = useState<boolean>(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [tuitionTerm, setTuitionTerm] = useState<string>('2025-2026');
   const [enrollmentMultiBarData, setEnrollmentMultiBarData] = useState<any>(null);
@@ -65,12 +66,48 @@ const App: React.FC = () => {
   const [attritionProportionData, setAttritionProportionData] = useState<any>(null);
   const [attritionDivisionProportionData, setAttritionDivisionProportionData] = useState<any>(null);
   const chartDownloadRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const instructionsPlaceholder = [
+    'Enrollment CSV: FACTS Staff Portal -> Finance -> Go to the Reports Tab -> Locate Custom Reports -> Select "Enrollment CSV Report Structure" -> Select the needed terms -> Select Print/View Options -> Export Data to Excel (Unformatted) -> Open File -> Save As CSV -> Upload CSV to this dashboard.',
+    'Attrition CSV: SIS FACTS Portal -> Select 3 Bars in Top Left Corner -> Click "Admissions" -> Select Reports on the Upper Tab -> Select "Enrollment Dashboard" -> Choose the Year you would like attrition data for -> Select Export, then export.csv -> Upload the file to Attrition',
+    'Financial Aid: First Select the Year you would like to upload financial data for -> Navigate to FACTS Staff Portal -> Finance -> Reports Tab -> "Select Balances with Adjustment Detail (as-of date)" -> Select the Student bubble instead of Customer -> Select the preferred year, then the Export to CSV Button -> Upload the File into the Finance Button',
+    'Admissions: Navigate to the SIS Facts Portal -> Select 3 Bars in Top Left Corner -> Click "Admissions" -> Under Dashboard, there is a multi colored chart with a year shown on the left. Please screenshot this whole page (Including the year). Ideally use snipping tool or anything that produces a PNG -> Upload Screenshot to Admissions Tab',
+    'Tuition and Fees: Navigate to the FACTS Staff Portal -> Select Profile from the top tab -> Select "Rate Tables" on the left menu -> Specify the preferred year from the drop down -> Select the tuition or fees hyperlink. You will see a chart of grades and money amounts. Please screenshot with a png and upload it to the respective Tuition or Fees tab on the dashboard. Note: Tuition and Fees will be added together when making the chart. Upload as many fees as is needed.'
+  ];
 
   const sanitizeFileName = (value: string) =>
     value
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'chart';
+
+  const formatInstruction = (instruction: string) => {
+    const [section, detail] = instruction.split(':');
+    const title = section?.trim() || 'Instructions';
+    const steps = (detail || instruction)
+      .split('->')
+      .map((step) => step.trim())
+      .filter(Boolean);
+
+    return { title, steps };
+  };
+
+  const getInstructionHighlights = (title: string) => {
+    const normalized = title.toLowerCase();
+
+    if (normalized.includes('financial aid')) {
+      return ['Select the year first', 'Upload a .csv file'];
+    }
+
+    if (normalized.includes('admissions')) {
+      return ['Upload a .png screenshot', 'Make sure the year is visible'];
+    }
+
+    if (normalized.includes('tuition and fees')) {
+      return ['Select the year first', 'Upload tuition and all needed fee screenshots'];
+    }
+
+    return [];
+  };
 
   const handleDownloadChart = async (chartKey: string, title: string) => {
     const chartNode = chartDownloadRefs.current[chartKey];
@@ -570,6 +607,114 @@ const App: React.FC = () => {
   //   }
   // }
 
+  if (showInstructions) {
+    return (
+      <div style={{ fontFamily: "'DM Sans', Arial, sans-serif", minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', borderBottom: '0.5px solid #e5e7eb', background: '#fff' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>Operating Instructions</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Follow each section in order and complete every step before uploading.</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowInstructions(false)}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
+          >
+            Back to Dashboard
+          </button>
+        </div>
+
+        <div style={{ maxWidth: 980, margin: '1.5rem auto', padding: '0 1rem 2rem' }}>
+          <div style={{ background: '#ffffff', border: '0.5px solid #e5e7eb', borderRadius: 12, padding: '0.9rem 1rem', color: '#374151', fontSize: 13, marginBottom: 14 }}>
+            Tip: Each card below is one upload category. Use the listed workflow to gather files, then return to the dashboard and upload.
+          </div>
+
+          <div style={{ display: 'grid', gap: 12 }}>
+            {instructionsPlaceholder.map((item, index) => {
+              const { title, steps } = formatInstruction(item);
+              const highlights = getInstructionHighlights(title);
+              return (
+                <section
+                  key={index}
+                  style={{
+                    background: '#fff',
+                    border: '0.5px solid #dbe4f0',
+                    borderRadius: 12,
+                    padding: '1rem 1rem 0.95rem',
+                    boxShadow: '0 6px 18px rgba(17, 24, 39, 0.04)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#185FA5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
+                      {index + 1}
+                    </div>
+                    <h2 style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 700 }}>{title}</h2>
+                  </div>
+
+                  {highlights.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                      {highlights.map((hint) => (
+                        <span
+                          key={`${title}-${hint}`}
+                          style={{
+                            fontSize: 12,
+                            color: '#1d4f8a',
+                            background: '#ecf4fe',
+                            border: '0.5px solid #bfd9f8',
+                            borderRadius: 999,
+                            padding: '3px 10px',
+                            fontWeight: 600
+                          }}
+                        >
+                          {hint}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <ol style={{ margin: 0, paddingLeft: 0, listStyle: 'none', color: '#1f2937', fontSize: 14, lineHeight: 1.65 }}>
+                    {steps.map((step, stepIndex) => (
+                      <li
+                        key={`${index}-${stepIndex}`}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '28px 1fr',
+                          gap: 8,
+                          marginBottom: 8,
+                          alignItems: 'start'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: '#f1f5f9',
+                            border: '0.5px solid #d7dee9',
+                            color: '#334155',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: 1
+                          }}
+                        >
+                          {stepIndex + 1}
+                        </span>
+                        <span style={{ display: 'block', paddingTop: 1 }}>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
 
@@ -584,9 +729,18 @@ const App: React.FC = () => {
             <div style={{ fontSize: 12, color: '#888', fontFamily: 'monospace' }}>analytics dashboard</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#16a34a', background: '#f0fdf4', padding: '5px 10px', borderRadius: 20 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
-          {message}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setShowInstructions(true)}
+            style={{ fontSize: 12, fontWeight: 600, padding: '7px 12px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
+          >
+            Instructions
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#16a34a', background: '#f0fdf4', padding: '5px 10px', borderRadius: 20 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
+            {message}
+          </div>
         </div>
       </div>
 
