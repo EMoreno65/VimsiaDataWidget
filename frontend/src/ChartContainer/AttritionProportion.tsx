@@ -3,16 +3,19 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { compareGradeLabels } from './sortUtils.ts';
 
 type Props = {
   data: Record<string, number>;
 };
 
 const AttritionProportionComponent: React.FC<Props> = ({ data }) => {
-  const chartData = Object.entries(data).map(([grade, value]) => ({
-    grade,
-    value,
-  }));
+  const chartData = Object.entries(data)
+    .map(([grade, value]) => ({
+      grade,
+      value,
+    }))
+    .sort((a, b) => compareGradeLabels(String(a.grade), String(b.grade)));
 
   const formatTooltipValue = (value: number | string) => {
     const numericValue = typeof value === 'number' ? value : Number(value);

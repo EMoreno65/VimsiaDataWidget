@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { compareGradeLabels } from './sortUtils.ts';
 
 type Props = {
   data: Record<string, number>;
@@ -16,7 +17,7 @@ const BarChartComponent: React.FC<Props> = ({ data }) => {
       label,
       value,
     }))
-    .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    .sort((a, b) => compareGradeLabels(String(a.label), String(b.label)));
 
   const formatTooltipValue = (value: number | string | undefined) => {
     const numericValue = typeof value === 'number' ? value : Number(value ?? 0);

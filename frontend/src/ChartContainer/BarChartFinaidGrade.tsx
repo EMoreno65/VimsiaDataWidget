@@ -3,16 +3,19 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { compareGradeLabels } from './sortUtils.ts';
 
 type Props = {
   data: Record<string, number>;
 };
 
 const BarChartFinaidGradeComponent: React.FC<Props> = ({ data }) => {
-  const chartData = Object.entries(data).map(([grade, value]) => ({
-    grade,
-    value,
-  }));
+  const chartData = Object.entries(data)
+    .map(([grade, value]) => ({
+      grade,
+      value,
+    }))
+    .sort((a, b) => compareGradeLabels(String(a.grade), String(b.grade)));
 
   return (
     <ResponsiveContainer width="100%" height={400}>

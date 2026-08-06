@@ -3,6 +3,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { compareGradeLabels } from './sortUtils.ts';
+import OrderedLegend from './OrderedLegend.tsx';
 
 type ChartEntry = Record<string, string | number>;
 
@@ -14,7 +16,17 @@ type Props = {
 const TERM_COLORS = ['#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
 
 const MultiBarChartEnrollmentDivisionComponent: React.FC<Props> = ({ chartData, terms }) => {
-  const orderedTerms = [...terms].sort((a, b) => String(a).localeCompare(String(b)));
+  const orderedTerms = [...terms].sort((a, b) => compareGradeLabels(String(a), String(b)));
+  const orderedLegendItems = [
+    ...orderedTerms.map((term, index) => ({
+      value: term,
+      color: TERM_COLORS[index % TERM_COLORS.length]
+    })),
+    {
+      value: 'capacity',
+      color: '#9ca3af'
+    }
+  ];
 
   return (
     <ResponsiveContainer width="100%" height={400}>
@@ -23,7 +35,7 @@ const MultiBarChartEnrollmentDivisionComponent: React.FC<Props> = ({ chartData, 
         <XAxis dataKey="name" tickLine={false} axisLine={false} />
         <YAxis tickLine={false} axisLine={false} />
         <Tooltip />
-        <Legend />
+        <Legend content={() => <OrderedLegend items={orderedLegendItems} />} />
         {orderedTerms.map((term, index) => (
           <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} radius={[4, 4, 0, 0]} />
         ))}

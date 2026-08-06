@@ -940,15 +940,28 @@ const App: React.FC = () => {
             <button type="button" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto', fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}>
               ▶ Generate
             </button>
-            {hasChart && (
-              <button
-                type="button"
-                onClick={() => handleDownloadChart(chartKey, title)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, padding: '7px 14px', borderRadius: 8, border: '0.5px solid #d1d5db', background: '#fff', cursor: 'pointer', width: 'fit-content' }}
-              >
-                ↓ Download Chart
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => handleDownloadChart(chartKey, title)}
+              disabled={!hasChart}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                padding: '7px 14px',
+                borderRadius: 8,
+                border: '0.5px solid #d1d5db',
+                background: hasChart ? '#fff' : '#f3f4f6',
+                color: hasChart ? '#111827' : '#9ca3af',
+                cursor: hasChart ? 'pointer' : 'not-allowed',
+                width: 'fit-content'
+              }}
+              title={hasChart ? 'Download chart as PNG' : 'Generate chart first'}
+            >
+              ↓ Download Chart
+            </button>
             <div ref={(node) => { chartDownloadRefs.current[chartKey] = node; }}>
               {chart}
             </div>

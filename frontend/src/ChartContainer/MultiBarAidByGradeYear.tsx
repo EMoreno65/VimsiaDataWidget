@@ -3,6 +3,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { compareGradeLabels } from './sortUtils.ts';
+import OrderedLegend from './OrderedLegend.tsx';
 
 type ChartEntry = Record<string, string | number>;
 
@@ -21,8 +23,13 @@ const MultiBarAidByGradeYear: React.FC<Props> = ({ chartData }) => {
       }
     });
   }
+  const orderedTermNames = [...termNames].sort((a, b) => compareGradeLabels(a, b));
+  const orderedLegendItems = orderedTermNames.map((term, index) => ({
+    value: term,
+    color: TERM_COLORS[index % TERM_COLORS.length]
+  }));
 
-  const orderedChartData = [...chartData].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const orderedChartData = [...chartData].sort((a, b) => compareGradeLabels(String(a.name), String(b.name)));
 
   return (
     <ResponsiveContainer width="100%" height={400}>
@@ -31,8 +38,8 @@ const MultiBarAidByGradeYear: React.FC<Props> = ({ chartData }) => {
         <XAxis dataKey="name" tickLine={false} axisLine={false} />
         <YAxis tickLine={false} axisLine={false} />
         <Tooltip />
-        <Legend />
-        {termNames.map((term, index) => (
+        <Legend content={() => <OrderedLegend items={orderedLegendItems} />} />
+        {orderedTermNames.map((term, index) => (
           <Bar key={term} dataKey={term} fill={TERM_COLORS[index % TERM_COLORS.length]} radius={[4, 4, 0, 0]} />
         ))}
       </BarChart>

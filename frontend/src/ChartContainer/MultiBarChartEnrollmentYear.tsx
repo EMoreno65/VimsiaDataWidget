@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import OrderedLegend, { OrderedLegendItem } from './OrderedLegend.tsx';
 
 
 type MultiChartData = Record<string, Record<string, number>>;
@@ -53,11 +54,6 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
     "11th",
     "12th"
   ];
-  const legendPayload = gradeOrder.map((grade) => ({
-    value: grade,
-    type: "square",
-    color: gradeColors[grade]
-  }));
 
   // STEP 1:
   // Convert dictionary -> array for Recharts
@@ -86,6 +82,13 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
 
   });
 
+  const orderedLegendItems: OrderedLegendItem[] = gradeOrder
+    .filter((grade) => subgroupNames.has(grade))
+    .map((grade) => ({
+      value: grade,
+      color: gradeColors[grade]
+    }));
+
   return (
 
     <div>
@@ -98,7 +101,7 @@ const MultiBarChartEnrollmentYearComponent: React.FC<Props> = ({
           <YAxis />
 
           <Tooltip />
-          <Legend payload={legendPayload as any} sort="none" />
+          <Legend content={() => <OrderedLegend items={orderedLegendItems} />} />
 
           <Bar dataKey="1st" fill={gradeColors["1st"]} />
           <Bar dataKey="2nd" fill={gradeColors["2nd"]} />
